@@ -1,0 +1,105 @@
+import { MonthSelector } from './MonthSelector'
+
+interface HeaderProps {
+  titulo?: string
+  subtitulo?: string
+  onNovaDespesa?: () => void
+  onNovaReceita?: () => void
+  onExportar?: () => void
+  onAbrirMenu?: () => void
+  mesAtual?: string
+  mesesDisponiveis?: string[]
+  onChangeMes?: (mes: string) => void
+  onNovoMes?: () => void
+}
+
+export function Header({
+  titulo = 'Julho 2026',
+  subtitulo = 'Visão geral do orçamento familiar',
+  onNovaDespesa,
+  onNovaReceita,
+  onExportar,
+  onAbrirMenu,
+  mesAtual,
+  mesesDisponiveis = [],
+  onChangeMes,
+  onNovoMes,
+}: HeaderProps) {
+  return (
+    <header className="sticky top-0 z-10 bg-slate-950/80 backdrop-blur border-b border-slate-800 px-4 sm:px-6 py-3 sm:py-4">
+      <div className="flex flex-col gap-3">
+        {/* Linha 1: hambúrguer + título + ações principais */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Hambúrguer — só mobile */}
+            <button
+              onClick={onAbrirMenu}
+              className="md:hidden w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 shrink-0 transition"
+              aria-label="Abrir menu"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-semibold text-white truncate">{titulo}</h2>
+              <p className="text-xs sm:text-sm text-slate-400 truncate hidden xs:block sm:block">{subtitulo}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {onExportar && (
+              <button
+                onClick={onExportar}
+                className="w-10 h-10 sm:w-auto sm:px-3 sm:py-2 rounded-xl sm:rounded-lg bg-slate-800 hover:bg-slate-700 text-sm font-medium text-slate-300 transition flex items-center justify-center gap-1.5"
+                title="Exportar CSV"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span className="hidden sm:inline">CSV</span>
+              </button>
+            )}
+
+            <button
+              onClick={onNovaReceita}
+              className="hidden sm:inline-flex px-3 py-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-600/30 text-sm font-medium transition"
+            >
+              + Receita
+            </button>
+
+            <button
+              onClick={onNovaDespesa}
+              className="w-10 h-10 sm:w-auto sm:px-3 sm:py-2 rounded-xl sm:rounded-lg bg-sky-600 hover:bg-sky-500 text-sm font-medium transition flex items-center justify-center gap-1.5"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="hidden sm:inline">Despesa</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Linha 2: seletor de mês + receita no mobile */}
+        <div className="flex items-center justify-between gap-2">
+          {mesAtual && onChangeMes && onNovoMes && (
+            <MonthSelector
+              mesAtual={mesAtual}
+              mesesDisponiveis={mesesDisponiveis}
+              onChangeMes={onChangeMes}
+              onNovoMes={onNovoMes}
+            />
+          )}
+
+          <button
+            onClick={onNovaReceita}
+            className="sm:hidden px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 border border-emerald-600/30 text-xs font-medium"
+          >
+            + Receita
+          </button>
+        </div>
+      </div>
+    </header>
+  )
+}
