@@ -1,9 +1,13 @@
-const CACHE = 'meucontrole-v1'
+const CACHE = 'meucontrole-v2'
 const ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/favicon.svg',
+  '/favicon-32.png',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/logo-mark.png',
+  '/logo-full.png',
 ]
 
 self.addEventListener('install', (event) => {
@@ -21,7 +25,6 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('fetch', (event) => {
-  // Network first, fallback to cache
   event.respondWith(
     fetch(event.request)
       .then((response) => {
