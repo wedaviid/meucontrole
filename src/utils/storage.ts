@@ -1,4 +1,5 @@
-import type { FaturaItem, Receita, Recorrente, Objetivo, MetaMensal } from '../types'
+import type { FaturaItem, Receita, Recorrente, Objetivo, MetaMensal, AppConfig } from '../types'
+import { CONFIG_PADRAO } from '../types'
 import { faturaItens as mockDespesas } from '../data/mock'
 import { CORES_CATEGORIA } from '../types'
 
@@ -9,6 +10,7 @@ const KEY_RECORRENTES = 'meucontrole_recorrentes'
 const KEY_OBJETIVOS = 'meucontrole_objetivos'
 const KEY_METAS = 'meucontrole_metas'
 const KEY_MESES_FECHADOS = 'meucontrole_meses_fechados'
+const KEY_CONFIG = 'meucontrole_config'
 
 const receitasIniciais: Receita[] = [
   { id: 1, nome: 'Salário David', valor: 2300, pessoa: 'David', data: '01/07' },
@@ -240,6 +242,35 @@ export function salvarObjetivos(lista: Objetivo[]): void {
 }
 
 // ===== Metas / Alertas =====
+
+// ===== Config (pessoas, cartões, espaço) =====
+export function carregarConfig(): AppConfig {
+  try {
+    const raw = localStorage.getItem(KEY_CONFIG)
+    if (!raw) return { ...CONFIG_PADRAO, origens: { ...CONFIG_PADRAO.origens, credito: [...CONFIG_PADRAO.origens.credito], debito: [...CONFIG_PADRAO.origens.debito], pix: [...CONFIG_PADRAO.origens.pix] }, pessoas: [...CONFIG_PADRAO.pessoas] }
+    const parsed = JSON.parse(raw) as Partial<AppConfig>
+    return {
+      nomeEspaco: parsed.nomeEspaco || CONFIG_PADRAO.nomeEspaco,
+      pessoas: Array.isArray(parsed.pessoas) && parsed.pessoas.length > 0 ? parsed.pessoas : [...CONFIG_PADRAO.pessoas],
+      origens: {
+        credito: parsed.origens?.credito?.length ? parsed.origens.credito : [...CONFIG_PADRAO.origens.credito],
+        debito: parsed.origens?.debito?.length ? parsed.origens.debito : [...CONFIG_PADRAO.origens.debito],
+        pix: parsed.origens?.pix?.length ? parsed.origens.pix : [...CONFIG_PADRAO.origens.pix],
+      },
+    }
+  } catch {
+    return { ...CONFIG_PADRAO, pessoas: [...CONFIG_PADRAO.pessoas], origens: { credito: [...CONFIG_PADRAO.origens.credito], debito: [...CONFIG_PADRAO.origens.debito], pix: [...CONFIG_PADRAO.origens.pix] } }
+  }
+}
+
+export function salvarConfig(config: AppConfig): void {
+  try {
+    localStorage.setItem(KEY_CONFIG, JSON.stringify(config))
+  } catch (err) {
+    console.error('Erro ao salvar config:', err)
+  }
+}
+
 export function carregarMetas(): MetaMensal {
   try {
     const raw = localStorage.getItem(KEY_METAS)

@@ -5,13 +5,14 @@ interface NovaReceitaModalProps {
   aberto: boolean
   onFechar: () => void
   onSalvar: (receita: Omit<Receita, 'id'> & { id?: number }) => void
+  pessoas: string[]
   receitaInicial?: Receita | null
 }
 
-export function NovaReceitaModal({ aberto, onFechar, onSalvar, receitaInicial }: NovaReceitaModalProps) {
+export function NovaReceitaModal({ aberto, onFechar, onSalvar, receitaInicial, pessoas }: NovaReceitaModalProps) {
   const [nome, setNome] = useState('')
   const [valor, setValor] = useState('')
-  const [pessoa, setPessoa] = useState<'David' | 'Kamille' | 'Conjunto'>('David')
+  const [pessoa, setPessoa] = useState('Conjunto')
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10))
   const [erro, setErro] = useState('')
   const [visivel, setVisivel] = useState(false)
@@ -34,7 +35,7 @@ export function NovaReceitaModal({ aberto, onFechar, onSalvar, receitaInicial }:
       } else {
         setNome('')
         setValor('')
-        setPessoa('David')
+        setPessoa(pessoas[0] || 'Eu')
         setData(new Date().toISOString().slice(0, 10))
       }
       setErro('')
@@ -165,18 +166,18 @@ export function NovaReceitaModal({ aberto, onFechar, onSalvar, receitaInicial }:
           <div>
             <label className="text-xs text-slate-400 mb-1.5 block">Quem recebeu</label>
             <div className="grid grid-cols-3 gap-2">
-              {(['David', 'Kamille', 'Conjunto'] as const).map((p) => (
+              {[...pessoas, 'Conjunto'].filter((v, i, a) => a.indexOf(v) === i).map((p, idx) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => setPessoa(p)}
                   className={`py-2.5 rounded-lg text-sm font-medium transition ${
                     pessoa === p
-                      ? p === 'David'
-                        ? 'bg-indigo-600 text-white'
-                        : p === 'Kamille'
-                        ? 'bg-pink-600 text-white'
-                        : 'bg-sky-600 text-white'
+                      ? p === 'Conjunto'
+                        ? 'bg-emerald-600 text-white'
+                        : idx % 2 === 0
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-pink-600 text-white'
                       : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                   }`}
                 >

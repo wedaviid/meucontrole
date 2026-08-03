@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { FaturaItem, MeioPagamento } from '../types'
-import { CATEGORIAS, MEIOS_PAGAMENTO, ORIGENS_POR_MEIO } from '../types'
+import { CATEGORIAS, MEIOS_PAGAMENTO } from '../types'
 import { sugerirCategoria } from '../utils/categorizar'
 
 interface NovaDespesaModalProps {
@@ -8,12 +8,14 @@ interface NovaDespesaModalProps {
   onFechar: () => void
   onSalvar: (despesa: NovaDespesa) => void
   despesaInicial?: FaturaItem | null
+  pessoas: string[]
+  origensPorMeio: Record<MeioPagamento, string[]>
 }
 
 export interface NovaDespesa {
   nome: string
   valor: number
-  pessoa: 'David' | 'Kamille'
+  pessoa: string
   categoria: string
   cartao: string
   meio: MeioPagamento
@@ -32,13 +34,13 @@ function inferirMeio(cartao: string, meio?: MeioPagamento): MeioPagamento {
   return 'credito'
 }
 
-export function NovaDespesaModal({ aberto, onFechar, onSalvar, despesaInicial }: NovaDespesaModalProps) {
+export function NovaDespesaModal({ aberto, onFechar, onSalvar, despesaInicial, pessoas, origensPorMeio }: NovaDespesaModalProps) {
   const [nome, setNome] = useState('')
   const [valor, setValor] = useState('')
-  const [pessoa, setPessoa] = useState<'David' | 'Kamille'>('David')
+  const [pessoa, setPessoa] = useState(pessoas[0] || 'Eu')
   const [categoria, setCategoria] = useState('Alimentação')
   const [meio, setMeio] = useState<MeioPagamento>('credito')
-  const [cartao, setCartao] = useState('Renner David')
+  const [cartao, setCartao] = useState('')
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10))
   const [parcelado, setParcelado] = useState(false)
   const [pago, setPago] = useState(true)
@@ -50,7 +52,7 @@ export function NovaDespesaModal({ aberto, onFechar, onSalvar, despesaInicial }:
 
   const isEditando = !!despesaInicial
 
-  const origens = useMemo(() => ORIGENS_POR_MEIO[meio] || [], [meio])
+  const origens = useMemo(() => origensPorMeio[meio] || [], [meio, origensPorMeio])
   const precisaOrigem = meio !== 'dinheiro'
 
   useEffect(() => {
@@ -77,7 +79,7 @@ export function NovaDespesaModal({ aberto, onFechar, onSalvar, despesaInicial }:
       if (despesaInicial) {
         setNome(despesaInicial.nome)
         setValor(String(despesaInicial.valor))
-        setPessoa(despesaInicial.pessoa as 'David' | 'Kamille')
+        setPessoa(despesaInicial.pessoa)
         setCategoria(despesaInicial.categoria)
         const m = inferirMeio(despesaInicial.cartao, despesaInicial.meio)
         setMeio(m)
@@ -93,10 +95,10 @@ export function NovaDespesaModal({ aberto, onFechar, onSalvar, despesaInicial }:
       } else {
         setNome('')
         setValor('')
-        setPessoa('David')
+        setPessoa(pessoas[0] || 'Eu')
         setCategoria('Alimentação')
         setMeio('credito')
-        setCartao('Renner David')
+        setCartao(origensPorMeio.credito?.[0] || '')
         setData(new Date().toISOString().slice(0, 10))
         setParcelado(false)
         setTotalParcelas('2')
@@ -233,13 +235,13 @@ export function NovaDespesaModal({ aberto, onFechar, onSalvar, despesaInicial }:
           <div>
             <label className="text-xs text-slate-400 mb-1.5 block">Pessoa</label>
             <div className="grid grid-cols-2 gap-2">
-              {(['David', 'Kamille'] as const).map((p) => (
+              {pessoas.map((p, idx) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => setPessoa(p)}
                   className={`py-2.5 rounded-lg text-sm font-medium transition ${
-                    pessoa === p ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                    pessoa === p ? (idx % 2 === 0 ? 'bg-indigo-600 text-white' : 'bg-pink-600 text-white') : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                   }`}
                 >
                   {p}

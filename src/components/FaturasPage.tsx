@@ -5,14 +5,18 @@ interface FaturasPageProps {
   lancamentos: FaturaItem[]
   onExcluir?: (id: number) => void
   onEditar?: (item: FaturaItem) => void
+  pessoas?: string[]
+  origensLista?: string[]
 }
 
-const ORIGENS_FILTRO = ['Todos', 'Renner', 'Itaú', 'Conta Itaú', 'Dinheiro', 'Principal'] // Principal = legados
-const FILTROS_PESSOA = ['Todos', 'David', 'Kamille']
-
-export function FaturasPage({ lancamentos, onExcluir, onEditar }: FaturasPageProps) {
+export function FaturasPage({ lancamentos, onExcluir, onEditar, pessoas = [], origensLista = [] }: FaturasPageProps) {
   const [pessoaFiltro, setPessoaFiltro] = useState('Todos')
   const [cartaoFiltro, setCartaoFiltro] = useState('Todos')
+  const FILTROS_PESSOA = ['Todos', ...(pessoas.length ? pessoas : Array.from(new Set(lancamentos.map((l) => l.pessoa))))]
+  const ORIGENS_FILTRO = ['Todos', ...Array.from(new Set([
+    ...origensLista,
+    ...lancamentos.map((l) => l.cartao).filter(Boolean),
+  ]))]
   const [busca, setBusca] = useState('')
   const [confirmExcluir, setConfirmExcluir] = useState<number | null>(null)
 
@@ -28,9 +32,8 @@ export function FaturasPage({ lancamentos, onExcluir, onEditar }: FaturasPagePro
 
   const isPago = (l: FaturaItem) => l.pago !== false
   const totalFiltrado = filtrados.filter(isPago).reduce((acc, l) => acc + l.valor, 0)
-  const totalDavid = lancamentos.filter((l) => l.pessoa === 'David' && isPago(l)).reduce((a, b) => a + b.valor, 0)
-  const totalKamille = lancamentos.filter((l) => l.pessoa === 'Kamille' && isPago(l)).reduce((a, b) => a + b.valor, 0)
-  const totalGeral = totalDavid + totalKamille
+  const pessoasCards = (pessoas.length ? pessoas : Array.from(new Set(lancamentos.map((l) => l.pessoa))))
+  const totalGeral = lancamentos.filter(isPago).reduce((a, b) => a + b.valor, 0)
   const totalPendenteGeral = lancamentos.filter((l) => !isPago(l)).reduce((a, b) => a + b.valor, 0)
 
   const handleExcluir = (id: number) => {
@@ -58,20 +61,18 @@ export function FaturasPage({ lancamentos, onExcluir, onEditar }: FaturasPagePro
             )}
           </p>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-          <p className="text-sm text-slate-400 mb-1">David</p>
-          <p className="text-2xl font-bold text-indigo-400">
-            R$ {totalDavid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </p>
-          <p className="text-xs text-slate-500 mt-1">Gastos dele</p>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-          <p className="text-sm text-slate-400 mb-1">Kamille</p>
-          <p className="text-2xl font-bold text-pink-400">
-            R$ {totalKamille.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </p>
-          <p className="text-xs text-slate-500 mt-1">Gastos dela</p>
-        </div>
+        {pessoasCards.slice(0, 2).map((nome, idx) => {
+          const total = lancamentos.filter((l) => l.pessoa === nome && isPago(l)).reduce((a, b) => a + b.valor, 0)
+          return (
+            <div key={nome} className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+              <p className="text-sm text-slate-400 mb-1">{nome}</p>
+              <p className={`text-2xl font-bold ${idx % 2 === 0 ? 'text-indigo-400' : 'text-pink-400'}`}>
+                R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">Gastos no mês</p>
+            </div>
+          )
+        })}
       </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
@@ -155,7 +156,7 @@ export function FaturasPage({ lancamentos, onExcluir, onEditar }: FaturasPagePro
                   <span className="text-xs px-2 py-1 rounded-md bg-slate-800 text-slate-300">{l.categoria}</span>
                 </div>
                 <div className="col-span-2 text-sm">
-                  <span className={l.pessoa === 'David' ? 'text-indigo-400' : 'text-pink-400'}>{l.pessoa}</span>
+                  <span className={pessoasCards.indexOf(l.pessoa) % 2 === 0 ? 'text-indigo-400' : 'text-pink-400'}>{l.pessoa}</span>
                   <span className="text-slate-500 text-xs block">
                     {l.meio === 'pix' ? 'Pix · ' : l.meio === 'debito' ? 'Débito · ' : l.meio === 'dinheiro' ? 'Dinheiro · ' : l.meio === 'credito' ? 'Crédito · ' : ''}
                     {l.cartao}

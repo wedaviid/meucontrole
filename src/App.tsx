@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import type { Pagina, FaturaItem, Receita, Recorrente, Objetivo, MetaMensal } from './types'
+import type { Pagina, FaturaItem, Receita, Recorrente, Objetivo, MetaMensal, AppConfig, MeioPagamento } from './types'
 import { CORES_CATEGORIA } from './types'
 import {
   carregarDespesas,
@@ -16,6 +16,8 @@ import {
   carregarObjetivos,
   salvarObjetivos,
   carregarMetas,
+  carregarConfig,
+  salvarConfig,
 } from './utils/storage'
 import { exportarTudoCSV } from './utils/exportCsv'
 import { syncPush, syncAutoPull } from './utils/sync'
@@ -38,6 +40,7 @@ import { HistoricoPage } from './components/HistoricoPage'
 import { ResumoMes } from './components/ResumoMes'
 import { ReceitasSection } from './components/ReceitasSection'
 import { SyncPage } from './components/SyncPage'
+import { ConfigPage } from './components/ConfigPage'
 import { SugestaoRecorrente, detectarCandidatosRecorrentes } from './components/SugestaoRecorrente'
 
 const CAT_ESSENCIAIS = ['Essenciais', 'Saúde']
@@ -85,6 +88,7 @@ function App() {
   const [recorrentes, setRecorrentes] = useState<Recorrente[]>(() => carregarRecorrentes())
   const [objetivos, setObjetivos] = useState<Objetivo[]>(() => carregarObjetivos())
   const [metas] = useState<MetaMensal>(() => carregarMetas())
+  const [config, setConfig] = useState<AppConfig>(() => carregarConfig())
 
   /** Só envia para nuvem depois do pull inicial (evita sobrescrever a nuvem com dados vazios) */
   const syncReady = useRef(false)
@@ -96,6 +100,7 @@ function App() {
     setReceitasLista(carregarReceitas(mes))
     setRecorrentes(carregarRecorrentes())
     setObjetivos(carregarObjetivos())
+    setConfig(carregarConfig())
     setMesesDisponiveis(listarMesesDisponiveis())
   }, [])
 
@@ -152,6 +157,11 @@ function App() {
     salvarObjetivos(objetivos)
     if (syncReady.current && carregarSyncConfig()) void syncPush('meucontrole_objetivos', objetivos)
   }, [objetivos])
+
+  useEffect(() => {
+    salvarConfig(config)
+    if (syncReady.current && carregarSyncConfig()) void syncPush('meucontrole_config', config)
+  }, [config])
 
   useEffect(() => {
     document.body.style.overflow = menuAberto ? 'hidden' : ''
@@ -231,13 +241,27 @@ function App() {
   }, [totalReceitas, totalEssenciais, totalNaoEssenciais, totalInvestimentos])
 
   const pessoasDinamicas = useMemo(() => {
-    const davidTotal = despesasLista.filter((d) => d.pessoa === 'David').reduce((a, d) => a + d.valor, 0)
-    const kamilleTotal = despesasLista.filter((d) => d.pessoa === 'Kamille').reduce((a, d) => a + d.valor, 0)
-    return [
-      { iniciais: 'RD', nome: 'Renner David', detalhe: 'Cartão principal + Itaú', total: davidTotal, cor: 'bg-indigo-600' },
-      { iniciais: 'RK', nome: 'Renner Kamille', detalhe: 'Cartão + Itaú', total: kamilleTotal, cor: 'bg-pink-600' },
-    ]
-  }, [despesasLista])
+    const cores = ['bg-indigo-600', 'bg-pink-600', 'bg-emerald-600', 'bg-amber-600', 'bg-violet-600']
+    return config.pessoas.map((nome, idx) => {
+      const total = despesasLista.filter((d) => d.pessoa === nome && d.pago !== false).reduce((a, d) => a + d.valor, 0)
+      return {
+        iniciais: nome.slice(0, 2).toUpperCase(),
+        nome,
+        detalhe: 'Gastos no mês',
+        total,
+        fatura: total,
+        fixos: 0,
+        cor: cores[idx % cores.length],
+      }
+    })
+  }, [despesasLista, config.pessoas])
+
+  const origensPorMeio = useMemo((): Record<MeioPagamento, string[]> => ({
+    credito: config.origens.credito,
+    debito: config.origens.debito,
+    pix: config.origens.pix,
+    dinheiro: [],
+  }), [config.origens])
 
   // Alertas inteligentes
   const alertas = useMemo(() => {
@@ -397,7 +421,7 @@ function App() {
     [despesasLista, nomesRecorrentes, dispensadosSet]
   )
 
-  const aceitarRecorrente = (c: { nome: string; valor: number; pessoa: 'David' | 'Kamille'; categoria: string; cartao: string }) => {
+  const aceitarRecorrente = (c: { nome: string; valor: number; pessoa: string; categoria: string; cartao: string }) => {
     setRecorrentes((prev) => [
       ...prev,
       {
@@ -427,6 +451,7 @@ function App() {
   const pageClass = direcao === 'out' ? 'page-exit' : animando ? 'page-enter' : 'page-enter-active'
 
   const subtituloMap: Record<Pagina, string> = {
+    config: 'Pessoas, cartões e contas',
     dashboard: 'Visão geral do orçamento familiar',
     faturas: 'Extrato detalhado dos cartões por pessoa',
     pessoas: 'Controle individual de gastos',
@@ -438,7 +463,7 @@ function App() {
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100">
-      <Sidebar pagina={pagina} onChangePagina={mudarPagina} aberto={menuAberto} onFechar={() => setMenuAberto(false)} />
+      <Sidebar pagina={pagina} onChangePagina={mudarPagina} aberto={menuAberto} onFechar={() => setMenuAberto(false)} nomeEspaco={config.nomeEspaco} pessoaPrincipal={config.pessoas[0]} />
 
       <main className="flex-1 overflow-auto">
         <Header
@@ -493,12 +518,16 @@ function App() {
           )}
 
           {paginaVisivel === 'faturas' && (
-            <FaturasPage lancamentos={despesasLista} onExcluir={handleExcluirDespesa} onEditar={handleEditarDespesa} />
+            <FaturasPage
+              pessoas={config.pessoas}
+              origensLista={[...config.origens.credito, ...config.origens.debito, ...config.origens.pix]} lancamentos={despesasLista} onExcluir={handleExcluirDespesa} onEditar={handleEditarDespesa} />
           )}
 
           {paginaVisivel === 'recorrentes' && (
             <RecorrentesPage
               lista={recorrentes}
+              pessoas={config.pessoas}
+              origensPorMeio={origensPorMeio}
               onSalvar={(lista) => {
                 setRecorrentes(lista)
                 // reaplica no mês atual
@@ -534,6 +563,10 @@ function App() {
             <HistoricoPage mesAtual={mesAtual} onIrParaMes={trocarMes} />
           )}
 
+          {paginaVisivel === 'config' && (
+            <ConfigPage config={config} onSalvar={setConfig} />
+          )}
+
           {paginaVisivel === 'sync' && (
             <SyncPage onSincronizado={recarregarDoLocal} />
           )}
@@ -541,6 +574,8 @@ function App() {
       </main>
 
       <NovaDespesaModal
+        pessoas={config.pessoas}
+        origensPorMeio={origensPorMeio}
         aberto={modalDespesa}
         onFechar={() => { setModalDespesa(false); setEditando(null) }}
         onSalvar={handleSalvarDespesa}
@@ -560,6 +595,7 @@ function App() {
       </button>
 
       <NovaReceitaModal
+        pessoas={config.pessoas}
         aberto={modalReceita}
         onFechar={() => { setModalReceita(false); setEditandoReceita(null) }}
         onSalvar={handleSalvarReceita}

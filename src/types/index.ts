@@ -70,7 +70,7 @@ export interface Receita {
   id: number
   nome: string
   valor: number
-  pessoa: 'David' | 'Kamille' | 'Conjunto'
+  pessoa: string
   data: string
 }
 
@@ -78,7 +78,7 @@ export interface Recorrente {
   id: number
   nome: string
   valor: number
-  pessoa: 'David' | 'Kamille'
+  pessoa: string
   categoria: string
   cartao: string
   meio?: MeioPagamento
@@ -102,7 +102,30 @@ export interface MetaMensal {
   alertaGeral: number
 }
 
-export type Pagina = 'dashboard' | 'pessoas' | 'faturas' | 'recorrentes' | 'objetivos' | 'historico' | 'sync'
+export interface AppConfig {
+  /** Nome do espaço (ex: Família Silva) */
+  nomeEspaco: string
+  /** Pessoas do orçamento */
+  pessoas: string[]
+  /** Origens por meio de pagamento */
+  origens: {
+    credito: string[]
+    debito: string[]
+    pix: string[]
+  }
+}
+
+export const CONFIG_PADRAO: AppConfig = {
+  nomeEspaco: 'Finanças da família',
+  pessoas: ['David', 'Kamille'],
+  origens: {
+    credito: ['Renner', 'Itaú'],
+    debito: ['Conta Itaú'],
+    pix: ['Conta Itaú'],
+  },
+}
+
+export type Pagina = 'dashboard' | 'pessoas' | 'faturas' | 'recorrentes' | 'objetivos' | 'historico' | 'sync' | 'config'
 
 export const CATEGORIAS = [
   'Alimentação',

@@ -1,21 +1,23 @@
 import { useState } from 'react'
 import type { Recorrente, MeioPagamento } from '../types'
-import { CATEGORIAS, CORES_CATEGORIA, MEIOS_PAGAMENTO, ORIGENS_POR_MEIO, LABEL_MEIO } from '../types'
+import { CATEGORIAS, CORES_CATEGORIA, MEIOS_PAGAMENTO, LABEL_MEIO } from '../types'
 
 interface RecorrentesPageProps {
   lista: Recorrente[]
   onSalvar: (lista: Recorrente[]) => void
+  pessoas: string[]
+  origensPorMeio: Record<MeioPagamento, string[]>
 }
 
-export function RecorrentesPage({ lista, onSalvar }: RecorrentesPageProps) {
+export function RecorrentesPage({ lista, onSalvar, pessoas, origensPorMeio }: RecorrentesPageProps) {
   const [modalAberto, setModalAberto] = useState(false)
   const [editando, setEditando] = useState<Recorrente | null>(null)
   const [nome, setNome] = useState('')
   const [valor, setValor] = useState('')
-  const [pessoa, setPessoa] = useState<'David' | 'Kamille'>('David')
+  const [pessoa, setPessoa] = useState('')
   const [categoria, setCategoria] = useState('Assinatura')
   const [meio, setMeio] = useState<MeioPagamento>('credito')
-  const [cartao, setCartao] = useState('Renner')
+  const [cartao, setCartao] = useState('')
   const [dia, setDia] = useState('10')
   const [erro, setErro] = useState('')
   const [menuAbertoId, setMenuAbertoId] = useState<number | null>(null)
@@ -26,10 +28,10 @@ export function RecorrentesPage({ lista, onSalvar }: RecorrentesPageProps) {
     setEditando(null)
     setNome('')
     setValor('')
-    setPessoa('David')
+    setPessoa(pessoas[0] || 'Eu')
     setCategoria('Assinatura')
     setMeio('credito')
-    setCartao('Renner')
+    setCartao(origensPorMeio.credito?.[0] || '')
     setDia('10')
     setErro('')
     setModalAberto(true)
@@ -240,9 +242,9 @@ export function RecorrentesPage({ lista, onSalvar }: RecorrentesPageProps) {
               <div>
                 <label className="text-xs text-slate-400 mb-1.5 block">Pessoa</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {(['David', 'Kamille'] as const).map((p) => (
+                  {pessoas.map((p, idx) => (
                     <button key={p} type="button" onClick={() => setPessoa(p)}
-                      className={`py-2 rounded-lg text-sm font-medium transition ${pessoa === p ? (p === 'David' ? 'bg-indigo-600 text-white' : 'bg-pink-600 text-white') : 'bg-slate-800 text-slate-400'}`}>
+                      className={`py-2 rounded-lg text-sm font-medium transition ${pessoa === p ? (idx % 2 === 0 ? 'bg-indigo-600 text-white' : 'bg-pink-600 text-white') : 'bg-slate-800 text-slate-400'}`}>
                       {p}
                     </button>
                   ))}
@@ -261,7 +263,7 @@ export function RecorrentesPage({ lista, onSalvar }: RecorrentesPageProps) {
                   <select value={meio} onChange={(e) => {
                     const m = e.target.value as MeioPagamento
                     setMeio(m)
-                    const origs = ORIGENS_POR_MEIO[m]
+                    const origs = origensPorMeio[m]
                     setCartao(origs[0] || '')
                   }}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500">
@@ -273,7 +275,7 @@ export function RecorrentesPage({ lista, onSalvar }: RecorrentesPageProps) {
                     <label className="text-xs text-slate-400 mb-1.5 block">Origem</label>
                     <select value={cartao} onChange={(e) => setCartao(e.target.value)}
                       className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500">
-                      {ORIGENS_POR_MEIO[meio].map((o) => <option key={o} value={o}>{o}</option>)}
+                      {(origensPorMeio[meio] || []).map((o) => <option key={o} value={o}>{o}</option>)}
                     </select>
                   </div>
                 )}

@@ -80,9 +80,20 @@ function DonutChart({ essenciais, alimentacao, investimentos }: { essenciais: nu
 }
 
 function PeopleBarChart({ despesas }: { despesas: FaturaItem[] }) {
-  const david = despesas.filter((l) => l.pessoa === 'David').reduce((a, b) => a + b.valor, 0)
-  const kamille = despesas.filter((l) => l.pessoa === 'Kamille').reduce((a, b) => a + b.valor, 0)
-  const max = Math.max(david, kamille, 1)
+  const cores = [
+    { text: 'text-indigo-400', bar: 'from-indigo-600 to-indigo-400' },
+    { text: 'text-pink-400', bar: 'from-pink-600 to-pink-400' },
+    { text: 'text-emerald-400', bar: 'from-emerald-600 to-emerald-400' },
+    { text: 'text-amber-400', bar: 'from-amber-600 to-amber-400' },
+  ]
+  const mapa: Record<string, number> = {}
+  despesas.forEach((l) => {
+    if (!l.pessoa) return
+    mapa[l.pessoa] = (mapa[l.pessoa] || 0) + l.valor
+  })
+  const items = Object.entries(mapa).map(([nome, valor]) => ({ nome, valor })).sort((a, b) => b.valor - a.valor)
+  const max = Math.max(...items.map((i) => i.valor), 1)
+  const total = items.reduce((a, i) => a + i.valor, 0)
   const [animated, setAnimated] = useState(false)
 
   useEffect(() => {
@@ -94,35 +105,33 @@ function PeopleBarChart({ despesas }: { despesas: FaturaItem[] }) {
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 animate-fade-in">
       <h3 className="text-lg font-semibold mb-5">Gastos por Pessoa</h3>
       <div className="space-y-6">
-        <div>
-          <div className="flex justify-between text-sm mb-2">
-            <span className="text-indigo-400 font-medium">David</span>
-            <span className="text-slate-300 transition-opacity duration-500" style={{ opacity: animated ? 1 : 0 }}>
-              R$ {david.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </span>
+        {items.map((item, idx) => {
+          const cor = cores[idx % cores.length]
+          return (
+            <div key={item.nome}>
+              <div className="flex justify-between text-sm mb-2">
+                <span className={`${cor.text} font-medium`}>{item.nome}</span>
+                <span className="text-slate-300 transition-opacity duration-500" style={{ opacity: animated ? 1 : 0 }}>
+                  R$ {item.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div className="h-4 bg-slate-800 rounded-full overflow-hidden">
+                <div className={`h-full bg-gradient-to-r ${cor.bar} rounded-full`}
+                  style={{ width: animated ? `${(item.valor / max) * 100}%` : '0%', transition: `width 1s cubic-bezier(0.22, 1, 0.36, 1) ${idx * 0.1}s` }} />
+              </div>
+            </div>
+          )
+        })}
+        {items.length >= 1 && (
+          <div className="pt-2 border-t border-slate-800 flex justify-between text-xs text-slate-500 transition-opacity duration-700"
+            style={{ opacity: animated ? 1 : 0, transitionDelay: '0.5s' }}>
+            <span>{items[0].nome} representa {total > 0 ? ((items[0].valor / total) * 100).toFixed(0) : 0}% dos gastos</span>
+            {items.length >= 2 && (
+              <span>Diferença: R$ {Math.abs(items[0].valor - items[1].valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            )}
           </div>
-          <div className="h-4 bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400 rounded-full"
-              style={{ width: animated ? `${(david / max) * 100}%` : '0%', transition: 'width 1s cubic-bezier(0.22, 1, 0.36, 1)' }} />
-          </div>
-        </div>
-        <div>
-          <div className="flex justify-between text-sm mb-2">
-            <span className="text-pink-400 font-medium">Kamille</span>
-            <span className="text-slate-300 transition-opacity duration-500" style={{ opacity: animated ? 1 : 0, transitionDelay: '0.15s' }}>
-              R$ {kamille.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-          <div className="h-4 bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-pink-600 to-pink-400 rounded-full"
-              style={{ width: animated ? `${(kamille / max) * 100}%` : '0%', transition: 'width 1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s' }} />
-          </div>
-        </div>
-        <div className="pt-2 border-t border-slate-800 flex justify-between text-xs text-slate-500 transition-opacity duration-700"
-          style={{ opacity: animated ? 1 : 0, transitionDelay: '0.5s' }}>
-          <span>David representa {david + kamille > 0 ? ((david / (david + kamille)) * 100).toFixed(0) : 0}% dos gastos</span>
-          <span>Diferença: R$ {Math.abs(david - kamille).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-        </div>
+        )}
+        {items.length === 0 && <p className="text-sm text-slate-500">Sem gastos no período</p>}
       </div>
     </div>
   )
