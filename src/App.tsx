@@ -564,7 +564,14 @@ function App() {
           )}
 
           {paginaVisivel === 'config' && (
-            <ConfigPage config={config} onSalvar={setConfig} />
+            <ConfigPage
+              config={config}
+              onSalvar={(c) => {
+                setConfig(c)
+                salvarConfig(c)
+                if (carregarSyncConfig()) void syncPush('meucontrole_config', c)
+              }}
+            />
           )}
 
           {paginaVisivel === 'sync' && (
