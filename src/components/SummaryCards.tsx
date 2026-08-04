@@ -27,7 +27,7 @@ export function SummaryCards({ receitas, despesas, saldo, investido = 0 }: Summa
         <p className="text-2xl font-bold text-emerald-400 tabular-nums">
           R$ {brl(receitas)}
         </p>
-        <p className="text-xs text-slate-400 mt-1">David + Kamille + extras</p>
+        <p className="text-xs text-slate-400 mt-1">Todas as pessoas + extras</p>
       </div>
 
       {/* Despesas */}

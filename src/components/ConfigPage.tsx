@@ -243,7 +243,7 @@ export function ConfigPage({ config, onSalvar }: ConfigPageProps) {
               value={novaNome}
               onChange={(e) => setNovaNome(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addConta())}
-              placeholder="Nome (ex: Itaú David)"
+              placeholder="Nome (ex: Conta principal)"
               className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500"
             />
             <button type="button" onClick={addConta} className="px-4 py-2 rounded-lg bg-sky-600 text-sm text-white">

@@ -1,6 +1,5 @@
 import type { FaturaItem, Receita, Recorrente, Objetivo, MetaMensal, AppConfig } from '../types'
 import { CONFIG_PADRAO, CONTAS_PADRAO, origensDeContas, contasDeOrigens } from '../types'
-import { faturaItens as mockDespesas } from '../data/mock'
 import { CORES_CATEGORIA } from '../types'
 
 const KEY_DESPESAS = 'meucontrole_despesas'
@@ -11,12 +10,6 @@ const KEY_OBJETIVOS = 'meucontrole_objetivos'
 const KEY_METAS = 'meucontrole_metas'
 const KEY_MESES_FECHADOS = 'meucontrole_meses_fechados'
 const KEY_CONFIG = 'meucontrole_config'
-
-const receitasIniciais: Receita[] = [
-  { id: 1, nome: 'Salário David', valor: 2300, pessoa: 'David', data: '01/07' },
-  { id: 2, nome: 'Salário Kamille', valor: 2900, pessoa: 'Kamille', data: '01/07' },
-  { id: 3, nome: 'Lavagem Car', valor: 441, pessoa: 'Conjunto', data: '05/07' },
-]
 
 const metasIniciais: MetaMensal = {
   metaEconomia: 500,
@@ -111,7 +104,7 @@ export function listarMesesDisponiveis(): string[] {
 
 
 function normalizarDespesa(d: FaturaItem): FaturaItem {
-  const cartao = d.cartao === 'Principal' ? 'Renner' : d.cartao
+  const cartao = d.cartao === 'Principal' ? 'Cartão' : d.cartao
   let meio = d.meio
   if (!meio) {
     if (cartao === 'Dinheiro') meio = 'dinheiro'
@@ -125,14 +118,11 @@ export function carregarDespesas(mes?: string): FaturaItem[] {
   const m = mes || getMesAtual()
   try {
     const raw = localStorage.getItem(`${KEY_DESPESAS}_${mesKey(m)}`)
-    if (!raw) {
-      if (m === '2026-07') return mockDespesas.map(normalizarDespesa)
-      return []
-    }
+    if (!raw) return []
     const parsed = JSON.parse(raw) as FaturaItem[]
     return Array.isArray(parsed) ? parsed.map(normalizarDespesa) : []
   } catch {
-    return m === '2026-07' ? mockDespesas.map(normalizarDespesa) : []
+    return []
   }
 }
 
@@ -149,14 +139,11 @@ export function carregarReceitas(mes?: string): Receita[] {
   const m = mes || getMesAtual()
   try {
     const raw = localStorage.getItem(`${KEY_RECEITAS}_${mesKey(m)}`)
-    if (!raw) {
-      if (m === '2026-07') return receitasIniciais
-      return []
-    }
+    if (!raw) return []
     const parsed = JSON.parse(raw) as Receita[]
     return Array.isArray(parsed) ? parsed : []
   } catch {
-    return m === '2026-07' ? receitasIniciais : []
+    return []
   }
 }
 

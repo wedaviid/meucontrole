@@ -63,9 +63,9 @@ export const MEIOS_PAGAMENTO: { id: MeioPagamento; label: string }[] = [
 ]
 
 export const ORIGENS_POR_MEIO: Record<MeioPagamento, string[]> = {
-  credito: ['Renner', 'Itaú'],
-  debito: ['Conta Itaú'],
-  pix: ['Conta Itaú'],
+  credito: [],
+  debito: [],
+  pix: [],
   dinheiro: [],
 }
 
@@ -146,21 +146,18 @@ export interface AppConfig {
   contas: ContaItem[]
 }
 
-export const CONTAS_PADRAO: ContaItem[] = [
-  { id: 'c1', nome: 'Renner', tipo: 'credito', incluirSaldo: false },
-  { id: 'c2', nome: 'Itaú', tipo: 'credito', incluirSaldo: false },
-  { id: 'c3', nome: 'Conta Itaú', tipo: 'conta', incluirSaldo: true },
-]
+export const CONTAS_PADRAO: ContaItem[] = []
 
+/** Estado inicial neutro — sem nomes pessoais (primeiro acesso) */
 export const CONFIG_PADRAO: AppConfig = {
-  nomeEspaco: 'Finanças da família',
-  pessoas: ['David', 'Kamille'],
+  nomeEspaco: 'Meu espaço',
+  pessoas: ['Eu'],
   origens: {
-    credito: ['Renner', 'Itaú'],
-    debito: ['Conta Itaú'],
-    pix: ['Conta Itaú'],
+    credito: [],
+    debito: [],
+    pix: [],
   },
-  contas: CONTAS_PADRAO,
+  contas: [],
 }
 
 /** Deriva listas de origem a partir das contas cadastradas */
@@ -168,9 +165,9 @@ export function origensDeContas(contas: ContaItem[]): AppConfig['origens'] {
   const credito = contas.filter((c) => c.tipo === 'credito').map((c) => c.nome)
   const contasNomes = contas.filter((c) => c.tipo === 'conta').map((c) => c.nome)
   return {
-    credito: credito.length ? credito : [...CONFIG_PADRAO.origens.credito],
-    debito: contasNomes.length ? contasNomes : [...CONFIG_PADRAO.origens.debito],
-    pix: contasNomes.length ? contasNomes : [...CONFIG_PADRAO.origens.pix],
+    credito,
+    debito: contasNomes,
+    pix: contasNomes,
   }
 }
 

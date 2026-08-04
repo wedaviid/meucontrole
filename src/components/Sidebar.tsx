@@ -9,7 +9,7 @@ interface SidebarProps {
   pessoaPrincipal?: string
 }
 
-export function Sidebar({ pagina, onChangePagina, aberto = false, onFechar, nomeEspaco = 'Finanças da família', pessoaPrincipal = 'Você' }: SidebarProps) {
+export function Sidebar({ pagina, onChangePagina, aberto = false, onFechar, nomeEspaco = 'Meu espaço', pessoaPrincipal = 'Você' }: SidebarProps) {
   const linkClass = (ativa: boolean) =>
     `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition ${
       ativa

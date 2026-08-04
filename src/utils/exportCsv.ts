@@ -79,10 +79,13 @@ export function exportarTudoCSV(
   // Por pessoa
   content += `\nPOR PESSOA\n`
   content += `Pessoa;Total\n`
-  const david = despesas.filter((d) => d.pessoa === 'David').reduce((a, d) => a + d.valor, 0)
-  const kamille = despesas.filter((d) => d.pessoa === 'Kamille').reduce((a, d) => a + d.valor, 0)
-  content += `David;${formatValor(david)}\n`
-  content += `Kamille;${formatValor(kamille)}\n`
+  const porPessoa: Record<string, number> = {}
+  despesas.forEach((d) => {
+    porPessoa[d.pessoa] = (porPessoa[d.pessoa] || 0) + d.valor
+  })
+  Object.entries(porPessoa).forEach(([nome, total]) => {
+    content += `${nome};${formatValor(total)}\n`
+  })
 
   downloadBlob(content, `meucontrole_${mes}.csv`)
 }
