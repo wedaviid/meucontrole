@@ -615,7 +615,7 @@ function App() {
           onNovoMes={criarNovoMes}
         />
 
-        <div className={`p-4 sm:p-6 space-y-6 ${pageClass}`}>
+        <div className={`p-4 sm:p-6 space-y-6 pb-24 md:pb-6 ${pageClass}`}>
           {paginaVisivel === 'dashboard' && (
             <>
               {/* Alerta único, discreto no topo */}
@@ -749,7 +749,10 @@ function App() {
       {menuFab && (
         <div className="md:hidden fixed inset-0 z-[160]" onClick={() => setMenuFab(false)}>
           <div className="absolute inset-0 bg-black/40" />
-          <div className="absolute bottom-24 right-5 flex flex-col gap-2 items-end">
+          <div
+            className="absolute right-5 flex flex-col gap-2 items-end"
+            style={{ bottom: 'calc(5.5rem + env(safe-area-inset-bottom, 0px))' }}
+          >
             <button
               type="button"
               onClick={() => {
@@ -778,7 +781,8 @@ function App() {
       <button
         type="button"
         onClick={() => setMenuFab((v) => !v)}
-        className="md:hidden fixed bottom-5 right-5 z-[150] w-14 h-14 rounded-full bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-900/40 flex items-center justify-center active:scale-95 transition"
+        className="md:hidden fixed right-5 z-[150] w-14 h-14 rounded-full bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-900/40 flex items-center justify-center active:scale-95 transition"
+        style={{ bottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
         aria-label="Novo lançamento"
       >
         <svg className={`w-7 h-7 transition ${menuFab ? 'rotate-45' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
