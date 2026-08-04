@@ -71,6 +71,7 @@ function App() {
 
   const [modalDespesa, setModalDespesa] = useState(false)
   const [modalReceita, setModalReceita] = useState(false)
+  const [menuFab, setMenuFab] = useState(false)
   const [editando, setEditando] = useState<FaturaItem | null>(null)
   const [editandoReceita, setEditandoReceita] = useState<Receita | null>(null)
   const [menuAberto, setMenuAberto] = useState(false)
@@ -174,7 +175,29 @@ function App() {
     const despesas = aplicarRecorrentesNoMes(novoMes, carregarDespesas(novoMes))
     setDespesasLista(despesas)
     salvarDespesas(despesas, novoMes)
-    setReceitasLista(carregarReceitas(novoMes))
+    let receitas = carregarReceitas(novoMes)
+    // Aplica receitas recorrentes ativas se o mês ainda não tiver
+    const recReceitas = carregarRecorrentes().filter((r) => r.ativa && r.tipo === 'receita')
+    for (const rr of recReceitas) {
+      const jaTem = receitas.some((r) => r.nome.toLowerCase() === rr.nome.toLowerCase())
+      if (!jaTem) {
+        receitas = [
+          {
+            id: Date.now() + rr.id,
+            nome: rr.nome,
+            valor: rr.valor,
+            pessoa: rr.pessoa,
+            data: `${String(Math.min(rr.diaVencimento, 28)).padStart(2, '0')}/${novoMes.split('-')[1]}`,
+            categoria: rr.categoria,
+            conta: rr.conta || rr.cartao,
+            recorrente: true,
+          },
+          ...receitas,
+        ]
+      }
+    }
+    setReceitasLista(receitas)
+    salvarReceitas(receitas, novoMes)
     setMesesDisponiveis(listarMesesDisponiveis())
   }, [])
 
@@ -256,12 +279,35 @@ function App() {
     })
   }, [despesasLista, config.pessoas])
 
-  const origensPorMeio = useMemo((): Record<MeioPagamento, string[]> => ({
-    credito: config.origens.credito,
-    debito: config.origens.debito,
-    pix: config.origens.pix,
-    dinheiro: [],
-  }), [config.origens])
+  const origensPorMeio = useMemo((): Record<MeioPagamento, string[]> => {
+    const contas = config.contas || []
+    if (contas.length) {
+      const credito = contas.filter((c) => c.tipo === 'credito').map((c) => c.nome)
+      const nomesConta = contas.filter((c) => c.tipo === 'conta').map((c) => c.nome)
+      return {
+        credito: credito.length ? credito : config.origens.credito,
+        debito: nomesConta.length ? nomesConta : config.origens.debito,
+        pix: nomesConta.length ? nomesConta : config.origens.pix,
+        dinheiro: [],
+      }
+    }
+    return {
+      credito: config.origens.credito,
+      debito: config.origens.debito,
+      pix: config.origens.pix,
+      dinheiro: [],
+    }
+  }, [config.contas, config.origens])
+
+  const atalhoSalario = useMemo(() => {
+    const s = receitasLista.find(
+      (r) =>
+        (r.categoria || '').toLowerCase().includes('sal') ||
+        r.nome.toLowerCase().includes('salário') ||
+        r.nome.toLowerCase().includes('salario')
+    )
+    return s?.valor || 0
+  }, [receitasLista])
 
   // Alertas inteligentes
   const alertas = useMemo(() => {
@@ -388,17 +434,61 @@ function App() {
   const handleExcluirDespesa = (id: number) => setDespesasLista((prev) => prev.filter((d) => d.id !== id))
   const handleEditarDespesa = (item: FaturaItem) => { setEditando(item); setModalDespesa(true) }
   const handleSalvarReceita = (receita: Omit<Receita, 'id'> & { id?: number }) => {
+    const full: Receita = {
+      id: receita.id || Date.now(),
+      nome: receita.nome,
+      valor: receita.valor,
+      pessoa: receita.pessoa,
+      data: receita.data,
+      categoria: receita.categoria,
+      conta: receita.conta,
+      observacao: receita.observacao,
+      recorrente: receita.recorrente,
+    }
     if (receita.id) {
-      setReceitasLista((prev) =>
-        prev.map((r) =>
-          r.id === receita.id
-            ? { id: r.id, nome: receita.nome, valor: receita.valor, pessoa: receita.pessoa, data: receita.data }
-            : r
-        )
-      )
+      setReceitasLista((prev) => prev.map((r) => (r.id === receita.id ? full : r)))
       setEditandoReceita(null)
     } else {
-      setReceitasLista((prev) => [{ ...receita, id: Date.now() }, ...prev])
+      setReceitasLista((prev) => [full, ...prev])
+    }
+    // Receita marcada como recorrente vira template mensal
+    if (full.recorrente) {
+      setRecorrentes((prev) => {
+        const existe = prev.find(
+          (r) => r.tipo === 'receita' && r.nome.toLowerCase() === full.nome.toLowerCase()
+        )
+        if (existe) {
+          return prev.map((r) =>
+            r.id === existe.id
+              ? {
+                  ...r,
+                  valor: full.valor,
+                  pessoa: full.pessoa,
+                  categoria: full.categoria || 'Salário',
+                  cartao: full.conta || r.cartao,
+                  conta: full.conta,
+                  ativa: true,
+                  tipo: 'receita',
+                }
+              : r
+          )
+        }
+        return [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            nome: full.nome,
+            valor: full.valor,
+            pessoa: full.pessoa,
+            categoria: full.categoria || 'Salário',
+            cartao: full.conta || '',
+            conta: full.conta,
+            diaVencimento: 1,
+            ativa: true,
+            tipo: 'receita' as const,
+          },
+        ]
+      })
     }
   }
 
@@ -589,20 +679,51 @@ function App() {
         despesaInicial={editando}
       />
 
-      {/* FAB mobile - lançamento rápido */}
+      {/* FAB mobile: despesa ou receita */}
+      {menuFab && (
+        <div className="md:hidden fixed inset-0 z-[160]" onClick={() => setMenuFab(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute bottom-24 right-5 flex flex-col gap-2 items-end">
+            <button
+              type="button"
+              onClick={() => {
+                setMenuFab(false)
+                setEditandoReceita(null)
+                setModalReceita(true)
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-600 text-white text-sm font-medium shadow-lg"
+            >
+              + Receita
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMenuFab(false)
+                setEditando(null)
+                setModalDespesa(true)
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-sky-600 text-white text-sm font-medium shadow-lg"
+            >
+              + Despesa
+            </button>
+          </div>
+        </div>
+      )}
       <button
         type="button"
-        onClick={() => { setEditando(null); setModalDespesa(true) }}
+        onClick={() => setMenuFab((v) => !v)}
         className="md:hidden fixed bottom-5 right-5 z-[150] w-14 h-14 rounded-full bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-900/40 flex items-center justify-center active:scale-95 transition"
-        aria-label="Nova despesa"
+        aria-label="Novo lançamento"
       >
-        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={`w-7 h-7 transition ${menuFab ? 'rotate-45' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
       </button>
 
       <NovaReceitaModal
         pessoas={config.pessoas}
+        contas={config.contas || []}
+        atalhoSalario={atalhoSalario}
         aberto={modalReceita}
         onFechar={() => { setModalReceita(false); setEditandoReceita(null) }}
         onSalvar={handleSalvarReceita}

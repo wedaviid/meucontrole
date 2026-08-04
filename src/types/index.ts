@@ -29,18 +29,30 @@ export interface Lancamento {
 
 export type MeioPagamento = 'credito' | 'debito' | 'pix' | 'dinheiro'
 
+/** Conta ou cartão cadastrado (modelo A) */
+export interface ContaItem {
+  id: string
+  /** Nome exibido (ex: Itaú David, Renner) */
+  nome: string
+  /** credito = cartão; conta = corrente/pix/débito */
+  tipo: 'credito' | 'conta'
+  /** Pessoa dona (opcional) */
+  pessoa?: string
+  /** Se entra no saldo geral */
+  incluirSaldo: boolean
+}
+
 export interface FaturaItem extends Lancamento {
   data: string
-  /** Origem: cartão ou conta (ex: Renner David, Conta Itaú) */
+  /** Origem: cartão ou conta */
   cartao: string
-  /** Meio: credito | debito | pix | dinheiro */
   meio?: MeioPagamento
   parcelado?: boolean
   parcelaAtual?: number
   totalParcelas?: number
   recorrenteId?: number
-  /** false = pendente (ainda não paga); default true */
   pago?: boolean
+  observacao?: string
 }
 
 export const MEIOS_PAGAMENTO: { id: MeioPagamento; label: string }[] = [
@@ -50,7 +62,6 @@ export const MEIOS_PAGAMENTO: { id: MeioPagamento; label: string }[] = [
   { id: 'dinheiro', label: 'Dinheiro' },
 ]
 
-/** Origens disponíveis por meio de pagamento */
 export const ORIGENS_POR_MEIO: Record<MeioPagamento, string[]> = {
   credito: ['Renner', 'Itaú'],
   debito: ['Conta Itaú'],
@@ -65,6 +76,16 @@ export const LABEL_MEIO: Record<MeioPagamento, string> = {
   dinheiro: 'Dinheiro',
 }
 
+export const CATEGORIAS_RECEITA = [
+  'Salário',
+  'Freelance',
+  'Extra',
+  'Rendimento',
+  'Empréstimo',
+  'Outros',
+] as const
+
+export type CategoriaReceita = (typeof CATEGORIAS_RECEITA)[number]
 
 export interface Receita {
   id: number
@@ -72,6 +93,12 @@ export interface Receita {
   valor: number
   pessoa: string
   data: string
+  categoria?: string
+  /** Conta de destino */
+  conta?: string
+  observacao?: string
+  /** Se true, repete nos próximos meses */
+  recorrente?: boolean
 }
 
 export interface Recorrente {
@@ -84,6 +111,10 @@ export interface Recorrente {
   meio?: MeioPagamento
   diaVencimento: number
   ativa: boolean
+  /** despesa (padrão) ou receita */
+  tipo?: 'despesa' | 'receita'
+  conta?: string
+  observacao?: string
 }
 
 export interface Objetivo {
@@ -103,17 +134,23 @@ export interface MetaMensal {
 }
 
 export interface AppConfig {
-  /** Nome do espaço (ex: Família Silva) */
   nomeEspaco: string
-  /** Pessoas do orçamento */
   pessoas: string[]
-  /** Origens por meio de pagamento */
+  /** Legado — ainda usado; preferir contas */
   origens: {
     credito: string[]
     debito: string[]
     pix: string[]
   }
+  /** Cadastro unificado de contas e cartões */
+  contas: ContaItem[]
 }
+
+export const CONTAS_PADRAO: ContaItem[] = [
+  { id: 'c1', nome: 'Renner', tipo: 'credito', incluirSaldo: false },
+  { id: 'c2', nome: 'Itaú', tipo: 'credito', incluirSaldo: false },
+  { id: 'c3', nome: 'Conta Itaú', tipo: 'conta', incluirSaldo: true },
+]
 
 export const CONFIG_PADRAO: AppConfig = {
   nomeEspaco: 'Finanças da família',
@@ -123,6 +160,33 @@ export const CONFIG_PADRAO: AppConfig = {
     debito: ['Conta Itaú'],
     pix: ['Conta Itaú'],
   },
+  contas: CONTAS_PADRAO,
+}
+
+/** Deriva listas de origem a partir das contas cadastradas */
+export function origensDeContas(contas: ContaItem[]): AppConfig['origens'] {
+  const credito = contas.filter((c) => c.tipo === 'credito').map((c) => c.nome)
+  const contasNomes = contas.filter((c) => c.tipo === 'conta').map((c) => c.nome)
+  return {
+    credito: credito.length ? credito : [...CONFIG_PADRAO.origens.credito],
+    debito: contasNomes.length ? contasNomes : [...CONFIG_PADRAO.origens.debito],
+    pix: contasNomes.length ? contasNomes : [...CONFIG_PADRAO.origens.pix],
+  }
+}
+
+export function contasDeOrigens(origens: AppConfig['origens']): ContaItem[] {
+  const lista: ContaItem[] = []
+  let i = 0
+  for (const n of origens.credito || []) {
+    lista.push({ id: `cred-${i++}`, nome: n, tipo: 'credito', incluirSaldo: false })
+  }
+  const vistas = new Set<string>()
+  for (const n of [...(origens.debito || []), ...(origens.pix || [])]) {
+    if (vistas.has(n)) continue
+    vistas.add(n)
+    lista.push({ id: `conta-${i++}`, nome: n, tipo: 'conta', incluirSaldo: true })
+  }
+  return lista.length ? lista : [...CONTAS_PADRAO]
 }
 
 export type Pagina = 'dashboard' | 'pessoas' | 'faturas' | 'recorrentes' | 'objetivos' | 'historico' | 'sync' | 'config'
@@ -155,6 +219,11 @@ export const CORES_CATEGORIA: Record<string, string> = {
   Saúde: 'bg-sky-500/10 text-sky-400',
   Investimentos: 'bg-sky-500/10 text-sky-400',
   Outros: 'bg-slate-500/10 text-slate-400',
+  Salário: 'bg-emerald-500/10 text-emerald-400',
+  Freelance: 'bg-sky-500/10 text-sky-400',
+  Extra: 'bg-amber-500/10 text-amber-400',
+  Rendimento: 'bg-indigo-500/10 text-indigo-400',
+  Empréstimo: 'bg-orange-500/10 text-orange-400',
 }
 
 export const GRADIENTES_CATEGORIA: Record<string, string> = {

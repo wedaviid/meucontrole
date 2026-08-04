@@ -1,5 +1,5 @@
 import type { FaturaItem, Receita, Recorrente, Objetivo, MetaMensal, AppConfig } from '../types'
-import { CONFIG_PADRAO } from '../types'
+import { CONFIG_PADRAO, CONTAS_PADRAO, origensDeContas, contasDeOrigens } from '../types'
 import { faturaItens as mockDespesas } from '../data/mock'
 import { CORES_CATEGORIA } from '../types'
 
@@ -247,25 +247,58 @@ export function salvarObjetivos(lista: Objetivo[]): void {
 export function carregarConfig(): AppConfig {
   try {
     const raw = localStorage.getItem(KEY_CONFIG)
-    if (!raw) return { ...CONFIG_PADRAO, origens: { ...CONFIG_PADRAO.origens, credito: [...CONFIG_PADRAO.origens.credito], debito: [...CONFIG_PADRAO.origens.debito], pix: [...CONFIG_PADRAO.origens.pix] }, pessoas: [...CONFIG_PADRAO.pessoas] }
+    if (!raw) {
+      return {
+        ...CONFIG_PADRAO,
+        pessoas: [...CONFIG_PADRAO.pessoas],
+        origens: {
+          credito: [...CONFIG_PADRAO.origens.credito],
+          debito: [...CONFIG_PADRAO.origens.debito],
+          pix: [...CONFIG_PADRAO.origens.pix],
+        },
+        contas: CONFIG_PADRAO.contas.map((c) => ({ ...c })),
+      }
+    }
     const parsed = JSON.parse(raw) as Partial<AppConfig>
+    const pessoas = Array.isArray(parsed.pessoas) && parsed.pessoas.length > 0 ? parsed.pessoas : [...CONFIG_PADRAO.pessoas]
+    const origensLegado = {
+      credito: parsed.origens?.credito?.length ? parsed.origens.credito : [...CONFIG_PADRAO.origens.credito],
+      debito: parsed.origens?.debito?.length ? parsed.origens.debito : [...CONFIG_PADRAO.origens.debito],
+      pix: parsed.origens?.pix?.length ? parsed.origens.pix : [...CONFIG_PADRAO.origens.pix],
+    }
+    let contas = Array.isArray(parsed.contas) && parsed.contas.length > 0
+      ? parsed.contas
+      : contasDeOrigens(origensLegado)
+    const origens = origensDeContas(contas)
     return {
       nomeEspaco: parsed.nomeEspaco || CONFIG_PADRAO.nomeEspaco,
-      pessoas: Array.isArray(parsed.pessoas) && parsed.pessoas.length > 0 ? parsed.pessoas : [...CONFIG_PADRAO.pessoas],
-      origens: {
-        credito: parsed.origens?.credito?.length ? parsed.origens.credito : [...CONFIG_PADRAO.origens.credito],
-        debito: parsed.origens?.debito?.length ? parsed.origens.debito : [...CONFIG_PADRAO.origens.debito],
-        pix: parsed.origens?.pix?.length ? parsed.origens.pix : [...CONFIG_PADRAO.origens.pix],
-      },
+      pessoas,
+      origens,
+      contas,
     }
   } catch {
-    return { ...CONFIG_PADRAO, pessoas: [...CONFIG_PADRAO.pessoas], origens: { credito: [...CONFIG_PADRAO.origens.credito], debito: [...CONFIG_PADRAO.origens.debito], pix: [...CONFIG_PADRAO.origens.pix] } }
+    return {
+      ...CONFIG_PADRAO,
+      pessoas: [...CONFIG_PADRAO.pessoas],
+      origens: {
+        credito: [...CONFIG_PADRAO.origens.credito],
+        debito: [...CONFIG_PADRAO.origens.debito],
+        pix: [...CONFIG_PADRAO.origens.pix],
+      },
+      contas: CONTAS_PADRAO.map((c) => ({ ...c })),
+    }
   }
 }
 
 export function salvarConfig(config: AppConfig): void {
   try {
-    localStorage.setItem(KEY_CONFIG, JSON.stringify(config))
+    const contas = config.contas?.length ? config.contas : contasDeOrigens(config.origens)
+    const normalizado: AppConfig = {
+      ...config,
+      contas,
+      origens: origensDeContas(contas),
+    }
+    localStorage.setItem(KEY_CONFIG, JSON.stringify(normalizado))
   } catch (err) {
     console.error('Erro ao salvar config:', err)
   }

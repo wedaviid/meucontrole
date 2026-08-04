@@ -48,7 +48,7 @@ export function FaturasPage({ lancamentos, onExcluir, onEditar, pessoas = [], or
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 gap-4 ${pessoasCards.length <= 1 ? 'md:grid-cols-2' : pessoasCards.length === 2 ? 'md:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-4'}`}>
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
           <p className="text-sm text-slate-400 mb-1">Total das Faturas</p>
           <p className="text-2xl font-bold text-rose-400">
@@ -61,12 +61,13 @@ export function FaturasPage({ lancamentos, onExcluir, onEditar, pessoas = [], or
             )}
           </p>
         </div>
-        {pessoasCards.slice(0, 2).map((nome, idx) => {
+        {pessoasCards.map((nome, idx) => {
           const total = lancamentos.filter((l) => l.pessoa === nome && isPago(l)).reduce((a, b) => a + b.valor, 0)
+          const cores = ['text-indigo-400', 'text-pink-400', 'text-emerald-400', 'text-amber-400', 'text-violet-400']
           return (
             <div key={nome} className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
               <p className="text-sm text-slate-400 mb-1">{nome}</p>
-              <p className={`text-2xl font-bold ${idx % 2 === 0 ? 'text-indigo-400' : 'text-pink-400'}`}>
+              <p className={`text-2xl font-bold ${cores[idx % cores.length]}`}>
                 R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
               <p className="text-xs text-slate-500 mt-1">Gastos no mês</p>

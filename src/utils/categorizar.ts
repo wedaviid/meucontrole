@@ -23,3 +23,24 @@ export function sugerirCategoria(nome: string): string | null {
   }
   return null
 }
+
+
+const REGRAS_RECEITA: { palavras: string[]; categoria: string }[] = [
+  { palavras: ['salario', 'salário', 'pagamento', 'holerite', 'proventos', 'folha'], categoria: 'Salário' },
+  { palavras: ['freelance', 'freela', 'pj ', 'nota fiscal', 'serviço', 'servico', 'cliente'], categoria: 'Freelance' },
+  { palavras: ['pix recebido', 'transferencia', 'transferência', 'extra', 'bico', 'venda'], categoria: 'Extra' },
+  { palavras: ['rendimento', 'juros', 'dividendo', 'yield', 'poupança', 'poupanca', 'cdb'], categoria: 'Rendimento' },
+  { palavras: ['emprestimo', 'empréstimo', 'adiantamento', 'consignado'], categoria: 'Empréstimo' },
+]
+
+export function sugerirCategoriaReceita(nome: string): string | null {
+  const n = nome.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')
+  if (!n.trim()) return null
+  for (const regra of REGRAS_RECEITA) {
+    for (const p of regra.palavras) {
+      const termo = p.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')
+      if (n.includes(termo)) return regra.categoria
+    }
+  }
+  return null
+}

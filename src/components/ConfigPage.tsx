@@ -1,57 +1,43 @@
 import { useEffect, useState } from 'react'
-import type { AppConfig } from '../types'
+import type { AppConfig, ContaItem } from '../types'
+import { origensDeContas } from '../types'
 
 interface ConfigPageProps {
   config: AppConfig
   onSalvar: (config: AppConfig) => void
 }
 
-function ListaEditavel({
-  titulo,
-  dica,
+function ListaPessoas({
   lista,
   setLista,
-  min = 0,
 }: {
-  titulo: string
-  dica?: string
   lista: string[]
   setLista: (v: string[]) => void
-  min?: number
 }) {
   const [novo, setNovo] = useState('')
-  const [erroLocal, setErroLocal] = useState('')
+  const [erro, setErro] = useState('')
 
-  const addItem = () => {
+  const add = () => {
     const v = novo.trim()
     if (!v) return
     if (lista.some((x) => x.toLowerCase() === v.toLowerCase())) {
-      setErroLocal('Já existe na lista')
+      setErro('Já existe')
       return
     }
     setLista([...lista, v])
     setNovo('')
-    setErroLocal('')
-  }
-
-  const removeItem = (idx: number) => {
-    if (lista.length <= min) {
-      setErroLocal('Mantenha pelo menos um item')
-      return
-    }
-    setLista(lista.filter((_, i) => i !== idx))
-    setErroLocal('')
+    setErro('')
   }
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
       <div>
-        <h3 className="text-sm font-semibold text-white">{titulo}</h3>
-        {dica && <p className="text-xs text-slate-500 mt-0.5">{dica}</p>}
+        <h3 className="text-sm font-semibold text-white">Pessoas</h3>
+        <p className="text-xs text-slate-500 mt-0.5">Quem participa do orçamento</p>
       </div>
       <ul className="space-y-2">
         {lista.map((item, idx) => (
-          <li key={`item-${idx}`} className="flex items-center gap-2">
+          <li key={`p-${idx}`} className="flex gap-2">
             <input
               value={item}
               onChange={(e) => {
@@ -63,9 +49,9 @@ function ListaEditavel({
             />
             <button
               type="button"
-              onClick={() => removeItem(idx)}
-              className="w-9 h-9 rounded-lg bg-slate-800 hover:bg-rose-600/20 text-slate-400 hover:text-rose-400 text-sm shrink-0"
-              title="Remover"
+              disabled={lista.length <= 1}
+              onClick={() => setLista(lista.filter((_, i) => i !== idx))}
+              className="w-9 h-9 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 disabled:opacity-30"
             >
               ×
             </button>
@@ -76,24 +62,15 @@ function ListaEditavel({
         <input
           value={novo}
           onChange={(e) => setNovo(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              addItem()
-            }
-          }}
-          placeholder="Adicionar..."
+          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), add())}
+          placeholder="Adicionar pessoa..."
           className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500"
         />
-        <button
-          type="button"
-          onClick={addItem}
-          className="px-3 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-sm font-medium text-white shrink-0"
-        >
+        <button type="button" onClick={add} className="px-3 py-2 rounded-lg bg-sky-600 text-sm text-white">
           +
         </button>
       </div>
-      {erroLocal && <p className="text-xs text-amber-400">{erroLocal}</p>}
+      {erro && <p className="text-xs text-amber-400">{erro}</p>}
     </div>
   )
 }
@@ -101,19 +78,38 @@ function ListaEditavel({
 export function ConfigPage({ config, onSalvar }: ConfigPageProps) {
   const [nomeEspaco, setNomeEspaco] = useState(config.nomeEspaco)
   const [pessoas, setPessoas] = useState<string[]>([...config.pessoas])
-  const [credito, setCredito] = useState<string[]>([...config.origens.credito])
-  const [debito, setDebito] = useState<string[]>([...config.origens.debito])
-  const [pix, setPix] = useState<string[]>([...config.origens.pix])
+  const [contas, setContas] = useState<ContaItem[]>(
+    config.contas?.length ? config.contas.map((c) => ({ ...c })) : []
+  )
   const [msg, setMsg] = useState('')
+  const [novaNome, setNovaNome] = useState('')
+  const [novaTipo, setNovaTipo] = useState<'credito' | 'conta'>('conta')
 
-  // Quando a config externa muda (ex.: sync), atualiza o formulário
   useEffect(() => {
     setNomeEspaco(config.nomeEspaco)
     setPessoas([...config.pessoas])
-    setCredito([...config.origens.credito])
-    setDebito([...config.origens.debito])
-    setPix([...config.origens.pix])
+    setContas(config.contas?.length ? config.contas.map((c) => ({ ...c })) : [])
   }, [config])
+
+  const addConta = () => {
+    const n = novaNome.trim()
+    if (!n) return
+    if (contas.some((c) => c.nome.toLowerCase() === n.toLowerCase())) {
+      setMsg('Já existe uma conta/cartão com esse nome')
+      return
+    }
+    setContas([
+      ...contas,
+      {
+        id: `c-${Date.now()}`,
+        nome: n,
+        tipo: novaTipo,
+        incluirSaldo: novaTipo === 'conta',
+      },
+    ])
+    setNovaNome('')
+    setMsg('')
+  }
 
   const salvar = () => {
     const pessoasLimpas = pessoas.map((p) => p.trim()).filter(Boolean)
@@ -121,26 +117,33 @@ export function ConfigPage({ config, onSalvar }: ConfigPageProps) {
       setMsg('Cadastre pelo menos uma pessoa')
       return
     }
+    const contasLimpas = contas
+      .map((c) => ({ ...c, nome: c.nome.trim() }))
+      .filter((c) => c.nome)
+    if (contasLimpas.length === 0) {
+      setMsg('Cadastre pelo menos uma conta ou cartão')
+      return
+    }
     const nova: AppConfig = {
       nomeEspaco: nomeEspaco.trim() || 'Meu espaço',
       pessoas: pessoasLimpas,
-      origens: {
-        credito: credito.map((c) => c.trim()).filter(Boolean),
-        debito: debito.map((c) => c.trim()).filter(Boolean),
-        pix: pix.map((c) => c.trim()).filter(Boolean),
-      },
+      contas: contasLimpas,
+      origens: origensDeContas(contasLimpas),
     }
     onSalvar(nova)
     setMsg('Configurações salvas!')
     setTimeout(() => setMsg(''), 2500)
   }
 
+  const cartoes = contas.filter((c) => c.tipo === 'credito')
+  const contasCorrente = contas.filter((c) => c.tipo === 'conta')
+
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
         <h3 className="text-lg font-semibold">Configurações</h3>
         <p className="text-sm text-slate-400 mt-1">
-          Personalize pessoas, cartões e contas. O app usa essas listas em despesas, receitas e recorrentes.
+          Pessoas, contas e cartões — usados em despesas, receitas e faturas.
         </p>
       </div>
 
@@ -154,34 +157,101 @@ export function ConfigPage({ config, onSalvar }: ConfigPageProps) {
         />
       </div>
 
-      <ListaEditavel
-        titulo="Pessoas"
-        dica="Quem participa do orçamento (1 ou mais)"
-        lista={pessoas}
-        setLista={setPessoas}
-        min={1}
-      />
+      <ListaPessoas lista={pessoas} setLista={setPessoas} />
 
-      <ListaEditavel
-        titulo="Cartões de crédito"
-        dica="Aparecem quando o meio for Crédito"
-        lista={credito}
-        setLista={setCredito}
-      />
+      {/* Contas e cartões */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+        <div>
+          <h3 className="text-sm font-semibold text-white">Contas e cartões</h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Conta = Pix/débito e destino de receita · Cartão = fatura de crédito
+          </p>
+        </div>
 
-      <ListaEditavel
-        titulo="Contas (débito)"
-        dica="Aparecem quando o meio for Débito"
-        lista={debito}
-        setLista={setDebito}
-      />
+        {contasCorrente.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">Contas</p>
+            {contasCorrente.map((c) => (
+              <div key={c.id} className="flex items-center gap-2">
+                <input
+                  value={c.nome}
+                  onChange={(e) =>
+                    setContas(contas.map((x) => (x.id === c.id ? { ...x, nome: e.target.value } : x)))
+                  }
+                  className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
+                />
+                <label className="flex items-center gap-1.5 text-[11px] text-slate-400 shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={c.incluirSaldo}
+                    onChange={(e) =>
+                      setContas(
+                        contas.map((x) => (x.id === c.id ? { ...x, incluirSaldo: e.target.checked } : x))
+                      )
+                    }
+                  />
+                  Saldo
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setContas(contas.filter((x) => x.id !== c.id))}
+                  className="w-9 h-9 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
-      <ListaEditavel
-        titulo="Contas (Pix)"
-        dica="Aparecem quando o meio for Pix"
-        lista={pix}
-        setLista={setPix}
-      />
+        {cartoes.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">Cartões de crédito</p>
+            {cartoes.map((c) => (
+              <div key={c.id} className="flex items-center gap-2">
+                <input
+                  value={c.nome}
+                  onChange={(e) =>
+                    setContas(contas.map((x) => (x.id === c.id ? { ...x, nome: e.target.value } : x)))
+                  }
+                  className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setContas(contas.filter((x) => x.id !== c.id))}
+                  className="w-9 h-9 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="pt-2 border-t border-slate-800 space-y-2">
+          <p className="text-xs text-slate-400">Adicionar</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <select
+              value={novaTipo}
+              onChange={(e) => setNovaTipo(e.target.value as 'credito' | 'conta')}
+              className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+            >
+              <option value="conta">Conta (Pix/débito)</option>
+              <option value="credito">Cartão de crédito</option>
+            </select>
+            <input
+              value={novaNome}
+              onChange={(e) => setNovaNome(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addConta())}
+              placeholder="Nome (ex: Itaú David)"
+              className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500"
+            />
+            <button type="button" onClick={addConta} className="px-4 py-2 rounded-lg bg-sky-600 text-sm text-white">
+              +
+            </button>
+          </div>
+        </div>
+      </div>
 
       {msg && (
         <p className={`text-sm ${msg.includes('salvas') ? 'text-emerald-400' : 'text-amber-400'}`}>{msg}</p>
