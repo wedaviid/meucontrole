@@ -543,7 +543,7 @@ function App() {
   const subtituloMap: Record<Pagina, string> = {
     config: 'Pessoas, cartões e contas',
     dashboard: 'Visão geral do orçamento familiar',
-    faturas: 'Extrato detalhado dos cartões por pessoa',
+    faturas: 'Gastos nos cartões por pessoa',
     pessoas: 'Controle individual de gastos',
     recorrentes: 'Assinaturas e lançamentos automáticos',
     objetivos: 'Metas de longo prazo da família',

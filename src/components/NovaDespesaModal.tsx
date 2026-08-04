@@ -209,26 +209,6 @@ export function NovaDespesaModal({ aberto, onFechar, onSalvar, despesaInicial, p
                 onChange={(e) => setData(e.target.value)}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500 transition"
               />
-              <div className="flex gap-2 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setData(new Date().toISOString().slice(0, 10))}
-                  className="flex-1 py-1.5 rounded-lg text-xs border border-slate-600 text-slate-300 hover:border-sky-500 hover:text-sky-400 transition"
-                >
-                  Hoje
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const d = new Date()
-                    d.setDate(d.getDate() - 1)
-                    setData(d.toISOString().slice(0, 10))
-                  }}
-                  className="flex-1 py-1.5 rounded-lg text-xs border border-slate-600 text-slate-300 hover:border-sky-500 hover:text-sky-400 transition"
-                >
-                  Ontem
-                </button>
-              </div>
             </div>
           </div>
 

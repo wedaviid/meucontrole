@@ -181,26 +181,6 @@ export function NovaReceitaModal({
                 onChange={(e) => setData(e.target.value)}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
               />
-              <div className="flex gap-1.5 mt-1.5">
-                <button
-                  type="button"
-                  onClick={() => setData(new Date().toISOString().slice(0, 10))}
-                  className="flex-1 py-1 rounded-md text-[11px] border border-slate-600 text-slate-300 hover:border-emerald-500"
-                >
-                  Hoje
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const d = new Date()
-                    d.setDate(d.getDate() - 1)
-                    setData(d.toISOString().slice(0, 10))
-                  }}
-                  className="flex-1 py-1 rounded-md text-[11px] border border-slate-600 text-slate-300 hover:border-emerald-500"
-                >
-                  Ontem
-                </button>
-              </div>
             </div>
           </div>
 
