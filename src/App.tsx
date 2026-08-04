@@ -613,6 +613,7 @@ function App() {
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
                 <ReceitasSection receitas={receitasLista} onExcluir={handleExcluirReceita} onEditar={handleEditarReceita} />
                 <ChartsSection
+                  variant="donut"
                   despesas={despesasLista}
                   totalEssenciais={totalEssenciais}
                   totalAlimentacao={totalNaoEssenciais}

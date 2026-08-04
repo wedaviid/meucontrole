@@ -7,6 +7,8 @@ interface ChartsSectionProps {
   totalEssenciais?: number
   totalAlimentacao?: number
   totalInvestimentos?: number
+  /** donut = só o gráfico de distribuição (dashboard); full = tudo */
+  variant?: 'full' | 'donut'
 }
 
 function DonutChart({ essenciais, alimentacao, investimentos }: { essenciais: number; alimentacao: number; investimentos: number }) {
@@ -181,7 +183,22 @@ function CategoryBars({ despesas }: { despesas: FaturaItem[] }) {
   )
 }
 
-export function ChartsSection({ despesas, totalEssenciais = 0, totalAlimentacao = 0, totalInvestimentos = 0 }: ChartsSectionProps) {
+export function ChartsSection({
+  despesas,
+  totalEssenciais = 0,
+  totalAlimentacao = 0,
+  totalInvestimentos = 0,
+  variant = 'full',
+}: ChartsSectionProps) {
+  if (variant === 'donut') {
+    return (
+      <DonutChart
+        essenciais={totalEssenciais}
+        alimentacao={totalAlimentacao}
+        investimentos={totalInvestimentos}
+      />
+    )
+  }
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
