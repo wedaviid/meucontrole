@@ -32,7 +32,7 @@ export function SyncPage({ onSincronizado }: SyncPageProps) {
   const gerar = () => {
     const nova = gerarChaveAcesso()
     setFamiliaId(nova)
-    setStatus('Chave gerada. Salve e teste a conexão. Guarde a chave — é o acesso ao seu espaço.')
+    setStatus('Chave gerada. Salve e teste a conexão. Guarde a chave para reconectar depois.')
     setErro('')
     setCopiado(false)
   }
@@ -68,7 +68,7 @@ export function SyncPage({ onSincronizado }: SyncPageProps) {
       setErro(r.erro || 'Falha na conexão. Confira URL, chave e a tabela mc_dados.')
       return
     }
-    setStatus('Conectado! Seu espaço está isolado pela chave de acesso.')
+    setStatus('Conectado. Dados sincronizam com este espaço.')
   }
 
   const puxar = async () => {
@@ -106,7 +106,7 @@ export function SyncPage({ onSincronizado }: SyncPageProps) {
         <div>
           <h3 className="text-lg font-semibold text-white">Sincronização na nuvem</h3>
           <p className="text-sm text-slate-400 mt-1">
-            Cada chave de acesso é um espaço separado. Quem não tem a sua chave não vê seus lançamentos no app.
+            Cada chave de acesso corresponde a um espaço de dados na nuvem.
           </p>
         </div>
         {conectado && (
@@ -143,7 +143,7 @@ export function SyncPage({ onSincronizado }: SyncPageProps) {
           <div>
             <label className="text-xs text-slate-400 mb-1.5 block">Sua chave de acesso</label>
             <p className="text-[11px] text-slate-500 mb-1.5">
-              É o código do seu espaço privado. Gere uma nova ou cole a que você guardou. Não compartilhe se quiser manter os dados só com quem você autorizar.
+              Identifica o espaço na nuvem. Gere uma nova ou cole uma já existente para sincronizar entre aparelhos.
             </p>
             <div className="flex gap-2">
               <input
@@ -220,14 +220,14 @@ export function SyncPage({ onSincronizado }: SyncPageProps) {
           </div>
 
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 sm:p-6 text-sm text-slate-400 space-y-2">
-            <p className="font-medium text-slate-300">Espaço privado</p>
+            <p className="font-medium text-slate-300">Como funciona</p>
             <ul className="list-disc list-inside space-y-1.5 text-xs leading-relaxed">
               <li>
-                <strong className="text-slate-300">Gerar</strong> cria uma chave só sua (ex.: mc-a3k9xq2p)
+                <strong className="text-slate-300">Gerar</strong> cria uma chave de acesso (ex.: mc-a3k9xq2p)
               </li>
-              <li>No app, só quem usa a <strong className="text-slate-300">mesma chave</strong> vê os mesmos lançamentos</li>
-              <li>Seu amigo gera a chave dele — você não precisa (nem deve) usar a chave dele</li>
-              <li>Guarde a chave: é o acesso ao espaço neste e em outros aparelhos</li>
+              <li>Cada chave isola um espaço de dados na nuvem</li>
+              <li>Use a mesma chave nos aparelhos que devem compartilhar os lançamentos</li>
+              <li>Guarde a chave: ela é necessária para reconectar</li>
             </ul>
           </div>
         </div>
