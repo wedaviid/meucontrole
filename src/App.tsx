@@ -572,38 +572,53 @@ function App() {
         <div className={`p-4 sm:p-6 space-y-6 ${pageClass}`}>
           {paginaVisivel === 'dashboard' && (
             <>
+              {/* Alerta único, discreto no topo */}
+              {alertas[0] && (
+                <AlertBanner titulo={alertas[0].titulo} mensagem={alertas[0].mensagem} />
+              )}
+              {candidatosRecorrentes[0] && (
+                <SugestaoRecorrente
+                  candidatos={candidatosRecorrentes.slice(0, 1)}
+                  onAceitar={aceitarRecorrente}
+                  onDispensar={dispensarRecorrente}
+                />
+              )}
+
+              {/* Linha 1: resumo */}
               <SummaryCards receitas={totalReceitas} despesas={totalDespesas} saldo={saldo} investido={totalInvestimentos} />
-              <ResumoMes
-                receitas={totalReceitas}
-                despesas={totalDespesas}
-                saldo={saldo}
-                essenciais={totalEssenciais}
-                naoEssenciais={totalNaoEssenciais}
-                investimentos={totalInvestimentos}
-                limiteEssenciais={Math.round((totalReceitas || 1) * 0.5)}
-                limiteNaoEssenciais={Math.round((totalReceitas || 1) * 0.3)}
-                limiteInvestimentos={Math.round((totalReceitas || 1) * 0.2)}
-              />
-              <SugestaoRecorrente
-                candidatos={candidatosRecorrentes}
-                onAceitar={aceitarRecorrente}
-                onDispensar={dispensarRecorrente}
-              />
-              <ReceitasSection receitas={receitasLista} onExcluir={handleExcluirReceita} onEditar={handleEditarReceita} />
-              <BudgetProgress categorias={categoriasBudget} baseReceitas={totalReceitas} />
-              <ChartsSection
-                despesas={despesasLista}
-                totalEssenciais={totalEssenciais}
-                totalAlimentacao={totalNaoEssenciais}
-                totalInvestimentos={totalInvestimentos}
-              />
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <PeopleSection pessoas={pessoasDinamicas} />
-                <TransactionsList lancamentos={despesasLista.slice(0, 6)} />
+
+              {/* Linha 2: inteligência + 50/30/20 */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                <ResumoMes
+                  receitas={totalReceitas}
+                  despesas={totalDespesas}
+                  saldo={saldo}
+                  essenciais={totalEssenciais}
+                  naoEssenciais={totalNaoEssenciais}
+                  investimentos={totalInvestimentos}
+                  limiteEssenciais={Math.round((totalReceitas || 1) * 0.5)}
+                  limiteNaoEssenciais={Math.round((totalReceitas || 1) * 0.3)}
+                  limiteInvestimentos={Math.round((totalReceitas || 1) * 0.2)}
+                />
+                <BudgetProgress categorias={categoriasBudget} baseReceitas={totalReceitas} />
               </div>
-              {alertas.map((a, i) => (
-                <AlertBanner key={i} titulo={a.titulo} mensagem={a.mensagem} />
-              ))}
+
+              {/* Linha 3: pessoas + últimos lançamentos */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                <PeopleSection pessoas={pessoasDinamicas} />
+                <TransactionsList lancamentos={despesasLista.slice(0, 5)} />
+              </div>
+
+              {/* Linha 4: receitas (compacto) + gráfico */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
+                <ReceitasSection receitas={receitasLista} onExcluir={handleExcluirReceita} onEditar={handleEditarReceita} />
+                <ChartsSection
+                  despesas={despesasLista}
+                  totalEssenciais={totalEssenciais}
+                  totalAlimentacao={totalNaoEssenciais}
+                  totalInvestimentos={totalInvestimentos}
+                />
+              </div>
             </>
           )}
 

@@ -3,7 +3,7 @@ import type { FaturaItem } from '../types'
 export interface CandidatoRecorrente {
   nome: string
   valor: number
-  pessoa: 'David' | 'Kamille'
+  pessoa: string
   categoria: string
   cartao: string
   vezes: number
@@ -23,10 +23,10 @@ export function SugestaoRecorrente({ candidatos, onAceitar, onDispensar }: Suges
       {candidatos.map((c) => (
         <div
           key={c.nome + c.pessoa}
-          className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+          className="bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
         >
           <div>
-            <p className="text-sm font-medium text-amber-200">Possível recorrente</p>
+            <p className="text-xs font-medium text-amber-200">Possível recorrente</p>
             <p className="text-white font-semibold mt-0.5">
               {c.nome}{' '}
               <span className="text-slate-400 font-normal text-sm">
@@ -86,7 +86,7 @@ export function detectarCandidatosRecorrentes(
       candidatos.push({
         nome: base.nome,
         valor: base.valor,
-        pessoa: (base.pessoa === 'Kamille' ? 'Kamille' : 'David'),
+        pessoa: base.pessoa,
         categoria: base.categoria,
         cartao: base.cartao,
         vezes: itens.length,

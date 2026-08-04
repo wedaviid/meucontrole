@@ -5,9 +5,9 @@ interface AlertBannerProps {
 
 export function AlertBanner({ titulo, mensagem }: AlertBannerProps) {
   return (
-    <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-5 flex items-start gap-4">
-      <div className="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center shrink-0">
-        <svg className="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="bg-rose-500/10 border border-rose-500/25 rounded-xl px-4 py-3 flex items-start gap-3">
+      <div className="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center shrink-0 mt-0.5">
+        <svg className="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -16,9 +16,9 @@ export function AlertBanner({ titulo, mensagem }: AlertBannerProps) {
           />
         </svg>
       </div>
-      <div>
-        <h4 className="font-semibold text-rose-300">{titulo}</h4>
-        <p className="text-sm text-rose-200/70 mt-1">{mensagem}</p>
+      <div className="min-w-0">
+        <h4 className="text-sm font-semibold text-rose-300">{titulo}</h4>
+        <p className="text-xs text-rose-200/70 mt-0.5 leading-relaxed">{mensagem}</p>
       </div>
     </div>
   )
