@@ -3,18 +3,24 @@ interface SummaryCardsProps {
   despesas: number
   saldo: number
   investido?: number
+  pctInvestimentos?: number
 }
 
 function brl(v: number) {
   return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export function SummaryCards({ receitas, despesas, saldo, investido = 0 }: SummaryCardsProps) {
-  const metaInvest = Math.round(receitas * 0.2)
+export function SummaryCards({
+  receitas,
+  despesas,
+  saldo,
+  investido = 0,
+  pctInvestimentos = 20,
+}: SummaryCardsProps) {
+  const metaInvest = Math.round(receitas * (pctInvestimentos / 100))
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* Receitas */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
         <div className="flex items-center justify-between mb-1">
           <p className="text-sm text-slate-300">Receitas</p>
@@ -24,13 +30,10 @@ export function SummaryCards({ receitas, despesas, saldo, investido = 0 }: Summa
             </svg>
           </div>
         </div>
-        <p className="text-2xl font-bold text-emerald-400 tabular-nums">
-          R$ {brl(receitas)}
-        </p>
+        <p className="text-2xl font-bold text-emerald-400 tabular-nums">R$ {brl(receitas)}</p>
         <p className="text-xs text-slate-400 mt-1">Todas as pessoas + extras</p>
       </div>
 
-      {/* Despesas */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
         <div className="flex items-center justify-between mb-1">
           <p className="text-sm text-slate-300">Despesas</p>
@@ -40,19 +43,30 @@ export function SummaryCards({ receitas, despesas, saldo, investido = 0 }: Summa
             </svg>
           </div>
         </div>
-        <p className="text-2xl font-bold text-rose-400 tabular-nums">
-          R$ {brl(despesas)}
-        </p>
+        <p className="text-2xl font-bold text-rose-400 tabular-nums">R$ {brl(despesas)}</p>
         <p className="text-xs text-slate-400 mt-1">Todos os cartões + fixos</p>
       </div>
 
-      {/* Saldo */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
         <div className="flex items-center justify-between mb-1">
           <p className="text-sm text-slate-300">Saldo do mês</p>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${saldo >= 0 ? 'bg-emerald-500/15' : 'bg-rose-500/15'}`}>
-            <svg className={`w-4 h-4 ${saldo >= 0 ? 'text-emerald-400' : 'text-rose-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              saldo >= 0 ? 'bg-emerald-500/15' : 'bg-rose-500/15'
+            }`}
+          >
+            <svg
+              className={`w-4 h-4 ${saldo >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+              />
             </svg>
           </div>
         </div>
@@ -64,7 +78,6 @@ export function SummaryCards({ receitas, despesas, saldo, investido = 0 }: Summa
         </p>
       </div>
 
-      {/* Investido */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
         <div className="flex items-center justify-between mb-1">
           <p className="text-sm text-slate-300">Investido</p>
@@ -74,9 +87,7 @@ export function SummaryCards({ receitas, despesas, saldo, investido = 0 }: Summa
             </svg>
           </div>
         </div>
-        <p className="text-2xl font-bold text-sky-400 tabular-nums">
-          R$ {brl(investido)}
-        </p>
+        <p className="text-2xl font-bold text-sky-400 tabular-nums">R$ {brl(investido)}</p>
         <p className="text-xs text-slate-400 mt-1">
           Meta {pctInvestimentos}%: R$ {brl(metaInvest)}
         </p>
