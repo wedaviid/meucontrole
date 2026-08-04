@@ -236,6 +236,16 @@ function App() {
 
   const pctOrc = useMemo(() => percentuaisDoMetodo(config), [config])
 
+  const tituloOrcamento = useMemo(() => {
+    const m = config.metodoOrcamento || '50-30-20'
+    if (m === '80-20') return 'Regra 80/20'
+    if (m === '60-20-20') return 'Regra 60/20/20'
+    if (m === 'personalizado') {
+      return `Personalizado ${pctOrc.essenciais}/${pctOrc.naoEssenciais}/${pctOrc.investimentos}`
+    }
+    return 'Regra 50/30/20'
+  }, [config.metodoOrcamento, pctOrc])
+
   const categoriasBudget = useMemo(() => {
     const base = totalReceitas || 1
     const metodo = config.metodoOrcamento || '50-30-20'
@@ -640,7 +650,7 @@ function App() {
                   pctInvestimentos={pctOrc.investimentos}
                   metodoOrcamento={config.metodoOrcamento || '50-30-20'}
                 />
-                <BudgetProgress categorias={categoriasBudget} baseReceitas={totalReceitas} />
+                <BudgetProgress categorias={categoriasBudget} baseReceitas={totalReceitas} titulo={tituloOrcamento} />
               </div>
 
               {/* Linha 3: pessoas + últimos lançamentos */}
