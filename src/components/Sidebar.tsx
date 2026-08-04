@@ -24,7 +24,10 @@ export function Sidebar({ pagina, onChangePagina, aberto = false, onFechar, nome
 
   const conteudo = (
     <>
-      <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+      <div
+        className="p-5 border-b border-slate-800 flex items-center justify-between"
+        style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top, 0px))' }}
+      >
         <div className="flex items-center gap-3">
           <img
             src="/logo-mark.png"
@@ -104,7 +107,10 @@ export function Sidebar({ pagina, onChangePagina, aberto = false, onFechar, nome
         </button>
       </nav>
 
-      <div className="p-4 border-t border-slate-800">
+      <div
+        className="p-4 border-t border-slate-800"
+        style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))' }}
+      >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-semibold">
             {(pessoaPrincipal || 'U').slice(0, 2).toUpperCase()}
