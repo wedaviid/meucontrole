@@ -262,6 +262,8 @@ export function carregarConfig(): AppConfig {
       pessoas,
       origens,
       contas,
+      metodoOrcamento: parsed.metodoOrcamento || '50-30-20',
+      percentuais: parsed.percentuais || { essenciais: 50, naoEssenciais: 30, investimentos: 20 },
     }
   } catch {
     return {

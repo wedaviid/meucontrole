@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { AppConfig, ContaItem } from '../types'
-import { origensDeContas } from '../types'
+import type { AppConfig, ContaItem, MetodoOrcamento, PercentuaisOrcamento } from '../types'
+import { origensDeContas, METODOS_ORCAMENTO } from '../types'
 
 interface ConfigPageProps {
   config: AppConfig
@@ -84,11 +84,17 @@ export function ConfigPage({ config, onSalvar }: ConfigPageProps) {
   const [msg, setMsg] = useState('')
   const [novaNome, setNovaNome] = useState('')
   const [novaTipo, setNovaTipo] = useState<'credito' | 'conta'>('conta')
+  const [metodo, setMetodo] = useState<MetodoOrcamento>(config.metodoOrcamento || '50-30-20')
+  const [perc, setPerc] = useState<PercentuaisOrcamento>(
+    config.percentuais || { essenciais: 50, naoEssenciais: 30, investimentos: 20 }
+  )
 
   useEffect(() => {
     setNomeEspaco(config.nomeEspaco)
     setPessoas([...config.pessoas])
     setContas(config.contas?.length ? config.contas.map((c) => ({ ...c })) : [])
+    setMetodo(config.metodoOrcamento || '50-30-20')
+    setPerc(config.percentuais || { essenciais: 50, naoEssenciais: 30, investimentos: 20 })
   }, [config])
 
   const addConta = () => {
@@ -120,15 +126,28 @@ export function ConfigPage({ config, onSalvar }: ConfigPageProps) {
     const contasLimpas = contas
       .map((c) => ({ ...c, nome: c.nome.trim() }))
       .filter((c) => c.nome)
-    if (contasLimpas.length === 0) {
-      setMsg('Cadastre pelo menos uma conta ou cartão')
-      return
+    // contas podem ficar vazias no primeiro setup
+    if (metodo === 'personalizado') {
+      const soma = perc.essenciais + perc.naoEssenciais + perc.investimentos
+      if (soma !== 100) {
+        setMsg(`Personalizado deve somar 100% (agora ${soma}%)`)
+        return
+      }
     }
+    const preset = METODOS_ORCAMENTO.find((m) => m.id === metodo)
+    const percentuais =
+      metodo === 'personalizado'
+        ? perc
+        : metodo === '80-20'
+          ? { essenciais: 80, naoEssenciais: 0, investimentos: 20 }
+          : preset?.percentuais || perc
     const nova: AppConfig = {
       nomeEspaco: nomeEspaco.trim() || 'Meu espaço',
       pessoas: pessoasLimpas,
       contas: contasLimpas,
       origens: origensDeContas(contasLimpas),
+      metodoOrcamento: metodo,
+      percentuais,
     }
     onSalvar(nova)
     setMsg('Configurações salvas!')
@@ -251,6 +270,76 @@ export function ConfigPage({ config, onSalvar }: ConfigPageProps) {
             </button>
           </div>
         </div>
+      </div>
+
+
+      {/* Método de orçamento */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+        <div>
+          <h3 className="text-sm font-semibold text-white">Método de orçamento</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Define as barras e o resumo inteligente do dashboard</p>
+        </div>
+        <div className="space-y-2">
+          {METODOS_ORCAMENTO.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => {
+                setMetodo(m.id)
+                if (m.id !== 'personalizado') setPerc({ ...m.percentuais })
+              }}
+              className={`w-full text-left px-3 py-3 rounded-xl border transition ${
+                metodo === m.id
+                  ? 'border-sky-500 bg-sky-500/10'
+                  : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    metodo === m.id ? 'border-sky-400' : 'border-slate-500'
+                  }`}
+                >
+                  {metodo === m.id && <span className="w-2 h-2 rounded-full bg-sky-400" />}
+                </span>
+                <span className="text-sm font-medium text-white">{m.label}</span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1 ml-6">{m.descricao}</p>
+            </button>
+          ))}
+        </div>
+
+        {metodo === 'personalizado' && (
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800">
+            {(
+              [
+                ['essenciais', 'Necessidades'],
+                ['naoEssenciais', 'Desejos'],
+                ['investimentos', 'Investimentos'],
+              ] as const
+            ).map(([key, label]) => (
+              <div key={key}>
+                <label className="text-[11px] text-slate-400 block mb-1">{label} %</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={perc[key]}
+                  onChange={(e) =>
+                    setPerc({ ...perc, [key]: Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) })
+                  }
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
+                />
+              </div>
+            ))}
+            <p className="col-span-3 text-xs text-slate-500">
+              Soma: {perc.essenciais + perc.naoEssenciais + perc.investimentos}%
+              {perc.essenciais + perc.naoEssenciais + perc.investimentos !== 100 && (
+                <span className="text-amber-400"> — precisa ser 100%</span>
+              )}
+            </p>
+          </div>
+        )}
       </div>
 
       {msg && (

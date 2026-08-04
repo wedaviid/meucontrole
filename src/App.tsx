@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type { Pagina, FaturaItem, Receita, Recorrente, Objetivo, MetaMensal, AppConfig, MeioPagamento } from './types'
+import { percentuaisDoMetodo } from './types'
 import { CORES_CATEGORIA } from './types'
 import {
   carregarDespesas,
@@ -233,35 +234,59 @@ function App() {
     [totalDespesas, totalEssenciais, totalInvestimentos]
   )
 
+  const pctOrc = useMemo(() => percentuaisDoMetodo(config), [config])
+
   const categoriasBudget = useMemo(() => {
     const base = totalReceitas || 1
+    const metodo = config.metodoOrcamento || '50-30-20'
+    // 80/20: junta essenciais+não essenciais como "Gastos"
+    if (metodo === '80-20') {
+      return [
+        {
+          nome: 'Gastos',
+          percentual: 80,
+          gasto: totalEssenciais + totalNaoEssenciais,
+          limite: Math.round(base * 0.8),
+          cor: 'from-rose-500 to-amber-400',
+          texto: 'text-rose-400',
+        },
+        {
+          nome: 'Investimentos',
+          percentual: 20,
+          gasto: totalInvestimentos,
+          limite: Math.round(base * 0.2),
+          cor: 'from-sky-500 to-indigo-500',
+          texto: 'text-sky-400',
+        },
+      ]
+    }
     return [
       {
         nome: 'Essenciais',
-        percentual: 50,
+        percentual: pctOrc.essenciais,
         gasto: totalEssenciais,
-        limite: Math.round(base * 0.5),
+        limite: Math.round(base * (pctOrc.essenciais / 100)),
         cor: 'from-emerald-500 to-emerald-400',
         texto: 'text-emerald-400',
       },
       {
         nome: 'Não Essenciais',
-        percentual: 30,
+        percentual: pctOrc.naoEssenciais,
         gasto: totalNaoEssenciais,
-        limite: Math.round(base * 0.3),
+        limite: Math.round(base * (pctOrc.naoEssenciais / 100)),
         cor: 'from-rose-500 to-rose-400',
         texto: 'text-rose-400',
       },
       {
         nome: 'Investimentos',
-        percentual: 20,
+        percentual: pctOrc.investimentos,
         gasto: totalInvestimentos,
-        limite: Math.round(base * 0.2),
+        limite: Math.round(base * (pctOrc.investimentos / 100)),
         cor: 'from-sky-500 to-indigo-500',
         texto: 'text-sky-400',
       },
     ]
-  }, [totalReceitas, totalEssenciais, totalNaoEssenciais, totalInvestimentos])
+  }, [totalReceitas, totalEssenciais, totalNaoEssenciais, totalInvestimentos, pctOrc, config.metodoOrcamento])
 
   const pessoasDinamicas = useMemo(() => {
     const cores = ['bg-indigo-600', 'bg-pink-600', 'bg-emerald-600', 'bg-amber-600', 'bg-violet-600']
@@ -309,21 +334,32 @@ function App() {
     return s?.valor || 0
   }, [receitasLista])
 
-  // Alertas inteligentes
+  // Alertas inteligentes (respeitam o método escolhido)
   const alertas = useMemo(() => {
     const lista: { titulo: string; mensagem: string }[] = []
     const base = totalReceitas || 1
+    const limNao = base * (pctOrc.naoEssenciais / 100)
+    const limEss = base * (pctOrc.essenciais / 100)
+    const metodo = config.metodoOrcamento || '50-30-20'
 
-    if (totalNaoEssenciais > base * 0.3 * (metas.alertaAlimentacao / 100)) {
+    if (metodo !== '80-20' && pctOrc.naoEssenciais > 0 && totalNaoEssenciais > limNao * (metas.alertaAlimentacao / 100)) {
       lista.push({
         titulo: 'Não Essenciais acima do limite',
-        mensagem: `Você já gastou R$ ${totalNaoEssenciais.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em gastos não essenciais (limite 30%: R$ ${(base * 0.3).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`,
+        mensagem: `Você já gastou R$ ${totalNaoEssenciais.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (limite ${pctOrc.naoEssenciais}%: R$ ${limNao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`,
       })
     }
-    if (totalEssenciais > base * 0.5 * (metas.alertaEssenciais / 100)) {
+    if (metodo === '80-20') {
+      const gastos = totalEssenciais + totalNaoEssenciais
+      if (gastos > base * 0.8 * (metas.alertaGeral / 100)) {
+        lista.push({
+          titulo: 'Gastos acima de 80%',
+          mensagem: `No método 80/20, os gastos gerais já estão em ${((gastos / base) * 100).toFixed(0)}% da receita.`,
+        })
+      }
+    } else if (totalEssenciais > limEss * (metas.alertaEssenciais / 100)) {
       lista.push({
         titulo: 'Essenciais próximos do limite',
-        mensagem: `Gastos essenciais estão altos em relação aos 50% da regra.`,
+        mensagem: `Gastos essenciais altos em relação aos ${pctOrc.essenciais}% da regra.`,
       })
     }
     if (totalDespesas > base * (metas.alertaGeral / 100) && totalReceitas > 0) {
@@ -339,7 +375,7 @@ function App() {
       })
     }
     return lista
-  }, [totalNaoEssenciais, totalEssenciais, totalDespesas, totalReceitas, saldo, metas])
+  }, [totalNaoEssenciais, totalEssenciais, totalDespesas, totalReceitas, saldo, metas, pctOrc, config.metodoOrcamento])
 
   // ===== Navegação =====
   const mudarPagina = (nova: Pagina) => {
@@ -585,7 +621,7 @@ function App() {
               )}
 
               {/* Linha 1: resumo */}
-              <SummaryCards receitas={totalReceitas} despesas={totalDespesas} saldo={saldo} investido={totalInvestimentos} />
+              <SummaryCards receitas={totalReceitas} despesas={totalDespesas} saldo={saldo} investido={totalInvestimentos} pctInvestimentos={pctOrc.investimentos} />
 
               {/* Linha 2: inteligência + 50/30/20 */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
@@ -596,9 +632,13 @@ function App() {
                   essenciais={totalEssenciais}
                   naoEssenciais={totalNaoEssenciais}
                   investimentos={totalInvestimentos}
-                  limiteEssenciais={Math.round((totalReceitas || 1) * 0.5)}
-                  limiteNaoEssenciais={Math.round((totalReceitas || 1) * 0.3)}
-                  limiteInvestimentos={Math.round((totalReceitas || 1) * 0.2)}
+                  limiteEssenciais={Math.round((totalReceitas || 1) * (pctOrc.essenciais / 100))}
+                  limiteNaoEssenciais={Math.round((totalReceitas || 1) * (pctOrc.naoEssenciais / 100))}
+                  limiteInvestimentos={Math.round((totalReceitas || 1) * (pctOrc.investimentos / 100))}
+                  pctEssenciais={pctOrc.essenciais}
+                  pctNaoEssenciais={pctOrc.naoEssenciais}
+                  pctInvestimentos={pctOrc.investimentos}
+                  metodoOrcamento={config.metodoOrcamento || '50-30-20'}
                 />
                 <BudgetProgress categorias={categoriasBudget} baseReceitas={totalReceitas} />
               </div>

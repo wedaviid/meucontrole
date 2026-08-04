@@ -78,7 +78,7 @@ export function SummaryCards({ receitas, despesas, saldo, investido = 0 }: Summa
           R$ {brl(investido)}
         </p>
         <p className="text-xs text-slate-400 mt-1">
-          Meta 20%: R$ {brl(metaInvest)}
+          Meta {pctInvestimentos}%: R$ {brl(metaInvest)}
         </p>
       </div>
     </div>

@@ -133,6 +133,17 @@ export interface MetaMensal {
   alertaGeral: number
 }
 
+export type MetodoOrcamento = '50-30-20' | '60-20-20' | '80-20' | 'personalizado'
+
+export interface PercentuaisOrcamento {
+  /** Necessidades / essenciais */
+  essenciais: number
+  /** Desejos / não essenciais */
+  naoEssenciais: number
+  /** Investimentos (+ reserva no 80-20) */
+  investimentos: number
+}
+
 export interface AppConfig {
   nomeEspaco: string
   pessoas: string[]
@@ -144,6 +155,56 @@ export interface AppConfig {
   }
   /** Cadastro unificado de contas e cartões */
   contas: ContaItem[]
+  /** Método de orçamento */
+  metodoOrcamento?: MetodoOrcamento
+  /** Usado quando metodo = personalizado (deve somar 100) */
+  percentuais?: PercentuaisOrcamento
+}
+
+export const METODOS_ORCAMENTO: {
+  id: MetodoOrcamento
+  label: string
+  descricao: string
+  percentuais: PercentuaisOrcamento
+}[] = [
+  {
+    id: '50-30-20',
+    label: '50/30/20',
+    descricao: '50% necessidades · 30% desejos · 20% investimentos',
+    percentuais: { essenciais: 50, naoEssenciais: 30, investimentos: 20 },
+  },
+  {
+    id: '60-20-20',
+    label: '60/20/20',
+    descricao: '60% necessidades · 20% desejos · 20% investimentos',
+    percentuais: { essenciais: 60, naoEssenciais: 20, investimentos: 20 },
+  },
+  {
+    id: '80-20',
+    label: '80/20',
+    descricao: '80% gastos gerais · 20% investimentos (Pay Yourself First)',
+    percentuais: { essenciais: 50, naoEssenciais: 30, investimentos: 20 },
+  },
+  {
+    id: 'personalizado',
+    label: 'Personalizado',
+    descricao: 'Você define os três percentuais (somam 100%)',
+    percentuais: { essenciais: 50, naoEssenciais: 30, investimentos: 20 },
+  },
+]
+
+export function percentuaisDoMetodo(config: AppConfig): PercentuaisOrcamento {
+  const metodo = config.metodoOrcamento || '50-30-20'
+  if (metodo === 'personalizado' && config.percentuais) {
+    return { ...config.percentuais }
+  }
+  if (metodo === '80-20') {
+    // 80% gastos (essenciais+não) tratado como: essenciais 50 + não 30 na UI de 2 potes de gasto? 
+    // Melhor: essenciais 80, naoEssenciais 0, investimentos 20 — barras: Gastos 80 / Invest 20
+    return { essenciais: 80, naoEssenciais: 0, investimentos: 20 }
+  }
+  const found = METODOS_ORCAMENTO.find((m) => m.id === metodo)
+  return found ? { ...found.percentuais } : { essenciais: 50, naoEssenciais: 30, investimentos: 20 }
 }
 
 export const CONTAS_PADRAO: ContaItem[] = []
@@ -158,6 +219,8 @@ export const CONFIG_PADRAO: AppConfig = {
     pix: [],
   },
   contas: [],
+  metodoOrcamento: '50-30-20',
+  percentuais: { essenciais: 50, naoEssenciais: 30, investimentos: 20 },
 }
 
 /** Deriva listas de origem a partir das contas cadastradas */
