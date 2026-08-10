@@ -50,7 +50,7 @@ export function FaturasPage({ lancamentos, onExcluir, onEditar, pessoas = [], or
     <div className="space-y-6">
       <div className={`grid grid-cols-1 gap-4 ${pessoasCards.length <= 1 ? 'md:grid-cols-2' : pessoasCards.length === 2 ? 'md:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-4'}`}>
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-          <p className="text-sm text-slate-400 mb-1">Total nos cartões</p>
+          <p className="text-sm text-slate-400 mb-1">Total de despesas</p>
           <p className="text-2xl font-bold text-rose-400">
             R$ {totalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>

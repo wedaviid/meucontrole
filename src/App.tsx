@@ -591,9 +591,9 @@ function App() {
   const pageClass = direcao === 'out' ? 'page-exit' : animando ? 'page-enter' : 'page-enter-active'
 
   const subtituloMap: Record<Pagina, string> = {
-    config: 'Pessoas, cartões e contas',
+    config: 'Pessoas, contas e cartões',
     dashboard: 'Visão geral do orçamento familiar',
-    faturas: 'Gastos nos cartões por pessoa',
+    faturas: 'Todas as despesas do mês',
     receitas: 'Todas as receitas do mês',
     pessoas: 'Controle individual de gastos',
     recorrentes: 'Assinaturas e lançamentos automáticos',
