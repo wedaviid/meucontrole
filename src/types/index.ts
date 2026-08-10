@@ -254,7 +254,7 @@ export function contasDeOrigens(origens: AppConfig['origens']): ContaItem[] {
   return lista.length ? lista : [...CONTAS_PADRAO]
 }
 
-export type Pagina = 'dashboard' | 'pessoas' | 'faturas' | 'recorrentes' | 'objetivos' | 'historico' | 'sync' | 'config'
+export type Pagina = 'dashboard' | 'pessoas' | 'faturas' | 'receitas' | 'recorrentes' | 'objetivos' | 'historico' | 'sync' | 'config'
 
 export const CATEGORIAS = [
   'Alimentação',

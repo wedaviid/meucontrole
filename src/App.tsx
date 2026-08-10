@@ -594,6 +594,7 @@ function App() {
     config: 'Pessoas, cartões e contas',
     dashboard: 'Visão geral do orçamento familiar',
     faturas: 'Gastos nos cartões por pessoa',
+    receitas: 'Todas as receitas do mês',
     pessoas: 'Controle individual de gastos',
     recorrentes: 'Assinaturas e lançamentos automáticos',
     objetivos: 'Metas de longo prazo da família',
@@ -635,7 +636,15 @@ function App() {
               )}
 
               {/* Linha 1: resumo */}
-              <SummaryCards receitas={totalReceitas} despesas={totalDespesas} saldo={saldo} investido={totalInvestimentos} pctInvestimentos={pctOrc.investimentos} />
+              <SummaryCards
+                receitas={totalReceitas}
+                despesas={totalDespesas}
+                saldo={saldo}
+                investido={totalInvestimentos}
+                pctInvestimentos={pctOrc.investimentos}
+                onClickReceitas={() => mudarPagina('receitas')}
+                onClickDespesas={() => mudarPagina('faturas')}
+              />
 
               {/* Linha 2: inteligência + 50/30/20 */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
@@ -660,7 +669,11 @@ function App() {
               {/* Linha 3: pessoas + últimos lançamentos */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                 <PeopleSection pessoas={pessoasDinamicas} />
-                <TransactionsList lancamentos={despesasLista.slice(0, 5)} />
+                <TransactionsList
+                  lancamentos={despesasLista.slice(0, 5)}
+                  onVerTodas={() => mudarPagina('faturas')}
+                  onEditar={handleEditarDespesa}
+                />
               </div>
 
               {/* Linha 4: receitas (compacto) + gráfico */}
@@ -683,7 +696,16 @@ function App() {
               origensLista={[...config.origens.credito, ...config.origens.debito, ...config.origens.pix]} lancamentos={despesasLista} onExcluir={handleExcluirDespesa} onEditar={handleEditarDespesa} />
           )}
 
+          {paginaVisivel === 'receitas' && (
+            <ReceitasSection
+              receitas={receitasLista}
+              onExcluir={handleExcluirReceita}
+              onEditar={handleEditarReceita}
+            />
+          )}
+
           {paginaVisivel === 'recorrentes' && (
+
             <RecorrentesPage
               lista={recorrentes}
               pessoas={config.pessoas}

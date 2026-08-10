@@ -4,6 +4,8 @@ interface SummaryCardsProps {
   saldo: number
   investido?: number
   pctInvestimentos?: number
+  onClickReceitas?: () => void
+  onClickDespesas?: () => void
 }
 
 function brl(v: number) {
@@ -16,12 +18,20 @@ export function SummaryCards({
   saldo,
   investido = 0,
   pctInvestimentos = 20,
+  onClickReceitas,
+  onClickDespesas,
 }: SummaryCardsProps) {
   const metaInvest = Math.round(receitas * (pctInvestimentos / 100))
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+      <button
+        type="button"
+        onClick={onClickReceitas}
+        className={`bg-slate-900 border border-slate-800 rounded-2xl p-5 text-left transition ${
+          onClickReceitas ? 'hover:border-emerald-500/40 hover:bg-slate-900/80 cursor-pointer active:scale-[0.99]' : ''
+        }`}
+      >
         <div className="flex items-center justify-between mb-1">
           <p className="text-sm text-slate-300">Receitas</p>
           <div className="w-8 h-8 rounded-full bg-emerald-500/15 flex items-center justify-center">
@@ -32,9 +42,15 @@ export function SummaryCards({
         </div>
         <p className="text-2xl font-bold text-emerald-400 tabular-nums">R$ {brl(receitas)}</p>
         <p className="text-xs text-slate-400 mt-1">Todas as pessoas + extras</p>
-      </div>
+      </button>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+      <button
+        type="button"
+        onClick={onClickDespesas}
+        className={`bg-slate-900 border border-slate-800 rounded-2xl p-5 text-left transition ${
+          onClickDespesas ? 'hover:border-rose-500/40 hover:bg-slate-900/80 cursor-pointer active:scale-[0.99]' : ''
+        }`}
+      >
         <div className="flex items-center justify-between mb-1">
           <p className="text-sm text-slate-300">Despesas</p>
           <div className="w-8 h-8 rounded-full bg-rose-500/15 flex items-center justify-center">
@@ -45,7 +61,7 @@ export function SummaryCards({
         </div>
         <p className="text-2xl font-bold text-rose-400 tabular-nums">R$ {brl(despesas)}</p>
         <p className="text-xs text-slate-400 mt-1">Todos os cartões + fixos</p>
-      </div>
+      </button>
 
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
         <div className="flex items-center justify-between mb-1">
