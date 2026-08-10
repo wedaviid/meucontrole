@@ -220,10 +220,6 @@ function App() {
     () => receitasLista.filter((r) => r.recebido !== false).reduce((a, r) => a + r.valor, 0),
     [receitasLista],
   )
-  const totalAReceber = useMemo(
-    () => receitasLista.filter((r) => r.recebido === false).reduce((a, r) => a + r.valor, 0),
-    [receitasLista],
-  )
   const totalDespesas = useMemo(() => despesasLista.filter((d) => d.pago !== false).reduce((a, d) => a + d.valor, 0), [despesasLista])
   const saldo = totalReceitas - totalDespesas
 
