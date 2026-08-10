@@ -99,6 +99,11 @@ export interface Receita {
   observacao?: string
   /** Se true, repete nos próximos meses */
   recorrente?: boolean
+  /**
+   * true / undefined = dinheiro já entrou (conta no total do mês)
+   * false = a receber (não entra no saldo real)
+   */
+  recebido?: boolean
 }
 
 export interface Recorrente {

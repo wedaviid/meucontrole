@@ -216,7 +216,14 @@ function App() {
   }
 
   // ===== Cálculos =====
-  const totalReceitas = useMemo(() => receitasLista.reduce((a, r) => a + r.valor, 0), [receitasLista])
+  const totalReceitas = useMemo(
+    () => receitasLista.filter((r) => r.recebido !== false).reduce((a, r) => a + r.valor, 0),
+    [receitasLista],
+  )
+  const totalAReceber = useMemo(
+    () => receitasLista.filter((r) => r.recebido === false).reduce((a, r) => a + r.valor, 0),
+    [receitasLista],
+  )
   const totalDespesas = useMemo(() => despesasLista.filter((d) => d.pago !== false).reduce((a, d) => a + d.valor, 0), [despesasLista])
   const saldo = totalReceitas - totalDespesas
 
@@ -490,6 +497,7 @@ function App() {
       conta: receita.conta,
       observacao: receita.observacao,
       recorrente: receita.recorrente,
+      recebido: receita.recebido !== false,
     }
     if (receita.id) {
       setReceitasLista((prev) => prev.map((r) => (r.id === receita.id ? full : r)))

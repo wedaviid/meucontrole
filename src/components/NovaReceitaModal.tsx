@@ -33,6 +33,7 @@ export function NovaReceitaModal({
   const [conta, setConta] = useState('')
   const [observacao, setObservacao] = useState('')
   const [recorrente, setRecorrente] = useState(false)
+  const [recebido, setRecebido] = useState(true)
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10))
   const [erro, setErro] = useState('')
   const [visivel, setVisivel] = useState(false)
@@ -51,6 +52,7 @@ export function NovaReceitaModal({
         setConta(receitaInicial.conta || contasTodas[0]?.nome || '')
         setObservacao(receitaInicial.observacao || '')
         setRecorrente(!!receitaInicial.recorrente)
+        setRecebido(receitaInicial.recebido !== false)
         setCategoriaManual(true)
         const parts = receitaInicial.data.split('/')
         if (parts.length >= 2) {
@@ -66,6 +68,7 @@ export function NovaReceitaModal({
         setConta(contasTodas[0]?.nome || '')
         setObservacao('')
         setRecorrente(false)
+        setRecebido(true)
         setCategoriaManual(false)
         setData(new Date().toISOString().slice(0, 10))
       }
@@ -113,6 +116,7 @@ export function NovaReceitaModal({
       conta: conta || undefined,
       observacao: observacao.trim() || undefined,
       recorrente,
+      recebido,
     })
     onFechar()
   }
@@ -256,6 +260,28 @@ export function NovaReceitaModal({
               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
             />
           </div>
+
+          <button
+            type="button"
+            onClick={() => setRecebido(!recebido)}
+            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-slate-800 border border-slate-700"
+          >
+            <div className="text-left">
+              <span className="text-sm text-slate-300 block">Já foi recebida?</span>
+              <span className="text-[11px] text-slate-500">
+                {recebido ? 'Entra no total do mês' : 'A receber — não conta no saldo ainda'}
+              </span>
+            </div>
+            <span
+              className={`relative w-11 h-6 rounded-full transition shrink-0 ${recebido ? 'bg-emerald-600' : 'bg-slate-600'}`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition ${
+                  recebido ? 'translate-x-5' : ''
+                }`}
+              />
+            </span>
+          </button>
 
           <button
             type="button"
