@@ -222,8 +222,11 @@ export function NovaDespesaModal({
       cartao: precisaOrigem ? cartao : 'Dinheiro',
       meio,
       data: data.split('-').reverse().join('/').slice(0, 5),
-      parcelado: meio === 'credito' ? parcelado : false,
-      totalParcelas: meio === 'credito' && parcelado ? parseInt(totalParcelas, 10) || 2 : undefined,
+      parcelado: meio === 'credito' || meio === 'boleto' ? parcelado : false,
+      totalParcelas:
+        (meio === 'credito' || meio === 'boleto') && parcelado
+          ? parseInt(totalParcelas, 10) || 2
+          : undefined,
       pago,
       despesaFixa: !isEditando && despesaFixa,
       diaVencimento: despesaFixa ? parseInt(diaFixo, 10) || 10 : undefined,
@@ -407,7 +410,7 @@ export function NovaDespesaModal({
               </div>
             )}
 
-            {meio === 'credito' && (
+            {(meio === 'credito' || meio === 'boleto') && (
               <>
                 <ToggleRow
                   label="Parcelado?"
