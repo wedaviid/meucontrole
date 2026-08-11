@@ -179,7 +179,7 @@ export function NovaReceitaModal({
               {(atalhoSalario || 0) > 0 && (
                 <button
                   type="button"
-                  onClick={() => setValor(formatarMoedaNumero(atalhoSalario))}
+                  onClick={() => setValor(formatarMoedaNumero(atalhoSalario ?? 0))}
                   className="mt-1.5 text-[11px] text-emerald-400 hover:text-emerald-300"
                 >
                   Usar último salário (R$ {atalhoSalario!.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
