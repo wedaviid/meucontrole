@@ -27,7 +27,7 @@ export interface Lancamento {
   cor: string
 }
 
-export type MeioPagamento = 'credito' | 'debito' | 'pix' | 'dinheiro'
+export type MeioPagamento = 'credito' | 'debito' | 'pix' | 'boleto' | 'dinheiro'
 
 /** Conta ou cartão cadastrado (modelo A) */
 export interface ContaItem {
@@ -59,6 +59,7 @@ export const MEIOS_PAGAMENTO: { id: MeioPagamento; label: string }[] = [
   { id: 'credito', label: 'Cartão de crédito' },
   { id: 'debito', label: 'Cartão de débito' },
   { id: 'pix', label: 'Pix' },
+  { id: 'boleto', label: 'Boleto' },
   { id: 'dinheiro', label: 'Dinheiro' },
 ]
 
@@ -66,6 +67,7 @@ export const ORIGENS_POR_MEIO: Record<MeioPagamento, string[]> = {
   credito: [],
   debito: [],
   pix: [],
+  boleto: [],
   dinheiro: [],
 }
 
@@ -73,6 +75,7 @@ export const LABEL_MEIO: Record<MeioPagamento, string> = {
   credito: 'Crédito',
   debito: 'Débito',
   pix: 'Pix',
+  boleto: 'Boleto',
   dinheiro: 'Dinheiro',
 }
 

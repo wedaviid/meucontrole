@@ -328,6 +328,7 @@ function App() {
         credito: credito.length ? credito : config.origens.credito,
         debito: nomesConta.length ? nomesConta : config.origens.debito,
         pix: nomesConta.length ? nomesConta : config.origens.pix,
+        boleto: nomesConta.length ? nomesConta : config.origens.pix,
         dinheiro: [],
       }
     }
@@ -335,6 +336,7 @@ function App() {
       credito: config.origens.credito,
       debito: config.origens.debito,
       pix: config.origens.pix,
+      boleto: config.origens.pix,
       dinheiro: [],
     }
   }, [config.contas, config.origens])

@@ -32,6 +32,7 @@ export interface NovaDespesa {
 function inferirMeio(cartao: string, meio?: MeioPagamento): MeioPagamento {
   if (meio) return meio
   const c = (cartao || '').toLowerCase()
+  if (c.includes('boleto')) return 'boleto'
   if (c.includes('conta') || c.includes('pix')) return 'pix'
   if (c.includes('débito') || c.includes('debito')) return 'debito'
   if (c.includes('dinheiro') || c.includes('espécie') || c.includes('especie')) return 'dinheiro'
@@ -354,7 +355,9 @@ export function NovaDespesaModal({
             </div>
             {precisaOrigem && (
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Origem</label>
+                <label className="text-xs text-slate-400 mb-1 block">
+                  {meio === 'boleto' ? 'Conta que paga' : meio === 'pix' || meio === 'debito' ? 'Conta' : 'Origem'}
+                </label>
                 <select
                   value={cartao}
                   onChange={(e) => setCartao(e.target.value)}
