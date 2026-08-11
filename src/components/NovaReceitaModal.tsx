@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import type { Receita, ContaItem } from '../types'
 import { CATEGORIAS_RECEITA } from '../types'

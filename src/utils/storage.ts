@@ -577,7 +577,7 @@ export function atualizarParcelamento(
 
 /** Atualiza lançamentos futuros ligados ao mesmo recorrenteId */
 export function atualizarPorRecorrenteId(
-  mesAtual: string,
+  _mesAtual: string,
   recorrenteId: number,
   campos: CamposAlteracaoDespesa,
   modo: ModoAplicarAlteracao,
