@@ -416,16 +416,55 @@ export function NovaDespesaModal({
                   }}
                 />
                 {parcelado && !despesaFixa && (
-                  <div className="pb-1 pt-0.5">
-                    <label className="text-xs text-slate-400 mb-1 block">Nº de parcelas</label>
-                    <input
-                      type="number"
-                      min={2}
-                      max={24}
-                      value={totalParcelas}
-                      onChange={(e) => setTotalParcelas(e.target.value)}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
-                    />
+                  <div className="pb-1 pt-1 space-y-2">
+                    <label className="text-xs text-slate-400 block">Parcelado em (meses)</label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setTotalParcelas(String(Math.max(2, (parseInt(totalParcelas, 10) || 2) - 1)))
+                        }
+                        className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-lg font-medium hover:bg-slate-700 active:scale-95"
+                        aria-label="Diminuir parcelas"
+                      >
+                        −
+                      </button>
+                      <div className="flex-1 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center">
+                        <span className="text-base font-semibold text-white tabular-nums">
+                          {parseInt(totalParcelas, 10) || 2}
+                        </span>
+                        <span className="text-xs text-slate-500 ml-1.5">x</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setTotalParcelas(String(Math.min(24, (parseInt(totalParcelas, 10) || 2) + 1)))
+                        }
+                        className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-lg font-medium hover:bg-slate-700 active:scale-95"
+                        aria-label="Aumentar parcelas"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[2, 3, 4, 6, 10, 12].map((n) => {
+                        const ativo = (parseInt(totalParcelas, 10) || 0) === n
+                        return (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setTotalParcelas(String(n))}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+                              ativo
+                                ? 'bg-sky-600 text-white'
+                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            }`}
+                          >
+                            {n}x
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
                 )}
               </>
