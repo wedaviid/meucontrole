@@ -1,4 +1,4 @@
-import type { FaturaItem, Receita, Recorrente, Objetivo, MetaMensal, AppConfig } from '../types'
+import type { FaturaItem, Receita, Recorrente, Objetivo, MetaMensal, AppConfig, MeioPagamento } from '../types'
 import { CONFIG_PADRAO, CONTAS_PADRAO, origensDeContas, contasDeOrigens } from '../types'
 import { CORES_CATEGORIA } from '../types'
 
@@ -371,7 +371,7 @@ export function gerarParcelasFuturas(
     pessoa: string
     categoria: string
     cartao: string
-    meio?: 'credito' | 'debito' | 'pix' | 'dinheiro'
+    meio?: MeioPagamento
     dataDiaMes: string
     cor: string
     sigla: string
