@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import type { FaturaItem, MeioPagamento } from '../types'
 import { CATEGORIAS, MEIOS_PAGAMENTO } from '../types'
 import { sugerirCategoria } from '../utils/categorizar'
+import { formatarMoedaDigitacao, formatarMoedaNumero, parseMoeda } from '../utils/moeda'
 
 interface NovaDespesaModalProps {
   aberto: boolean
@@ -128,7 +129,7 @@ export function NovaDespesaModal({
       setVisivel(true)
       if (despesaInicial) {
         setNome(despesaInicial.nome.replace(/\s+\d+\/\d+$/, ''))
-        setValor(String(despesaInicial.valor))
+        setValor(formatarMoedaNumero(despesaInicial.valor))
         setPessoa(despesaInicial.pessoa)
         setCategoria(despesaInicial.categoria)
         const m = inferirMeio(despesaInicial.cartao, despesaInicial.meio)
@@ -200,7 +201,7 @@ export function NovaDespesaModal({
       setErro('Informe a descrição')
       return
     }
-    const valorNum = parseFloat(valor.replace(',', '.'))
+    const valorNum = parseMoeda(valor)
     if (isNaN(valorNum) || valorNum <= 0) {
       setErro('Informe um valor válido')
       return
@@ -279,15 +280,18 @@ export function NovaDespesaModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Valor (R$)</label>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={valor}
-                onChange={(e) => setValor(e.target.value)}
-                placeholder="0,00"
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500"
-              />
+              <label className="text-xs text-slate-400 mb-1 block">Valor</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 pointer-events-none">R$</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={valor}
+                  onChange={(e) => setValor(formatarMoedaDigitacao(e.target.value))}
+                  placeholder="0,00"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-3 py-2.5 text-sm text-white tabular-nums focus:outline-none focus:border-sky-500"
+                />
+              </div>
             </div>
             <div>
               <label className="text-xs text-slate-400 mb-1 block">Data</label>

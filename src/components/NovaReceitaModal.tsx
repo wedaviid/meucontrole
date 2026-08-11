@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import type { Receita, ContaItem } from '../types'
 import { CATEGORIAS_RECEITA } from '../types'
 import { sugerirCategoriaReceita } from '../utils/categorizar'
+import { formatarMoedaDigitacao, formatarMoedaNumero, parseMoeda } from '../utils/moeda'
 
 interface NovaReceitaModalProps {
   aberto: boolean
@@ -50,7 +51,7 @@ export function NovaReceitaModal({
       setVisivel(true)
       if (receitaInicial) {
         setNome(receitaInicial.nome)
-        setValor(String(receitaInicial.valor))
+        setValor(formatarMoedaNumero(receitaInicial.valor))
         setPessoa(receitaInicial.pessoa)
         setCategoria(receitaInicial.categoria || 'Salário')
         setConta(receitaInicial.conta || contasTodas[0]?.nome || '')
@@ -104,7 +105,7 @@ export function NovaReceitaModal({
       setErro('Informe a descrição da receita')
       return
     }
-    const valorNum = parseFloat(valor.replace(',', '.'))
+    const valorNum = parseMoeda(valor)
     if (isNaN(valorNum) || valorNum <= 0) {
       setErro('Informe um valor válido')
       return
@@ -163,19 +164,22 @@ export function NovaReceitaModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-slate-400 mb-1.5 block">Valor (R$)</label>
+              <label className="text-xs text-slate-400 mb-1.5 block">Valor</label>
+              <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 pointer-events-none">R$</span>
               <input
                 type="text"
-                inputMode="decimal"
+                inputMode="numeric"
                 value={valor}
-                onChange={(e) => setValor(e.target.value.replace(/[^\d,.]/g, ''))}
+                onChange={(e) => setValor(formatarMoedaDigitacao(e.target.value))}
                 placeholder="0,00"
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-3 py-2.5 text-sm text-white tabular-nums focus:outline-none focus:border-emerald-500"
               />
+              </div>
               {(atalhoSalario || 0) > 0 && (
                 <button
                   type="button"
-                  onClick={() => setValor(String(atalhoSalario))}
+                  onClick={() => setValor(formatarMoedaNumero(atalhoSalario))}
                   className="mt-1.5 text-[11px] text-emerald-400 hover:text-emerald-300"
                 >
                   Usar último salário (R$ {atalhoSalario!.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
