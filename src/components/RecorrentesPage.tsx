@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { Recorrente, MeioPagamento } from '../types'
 import { CATEGORIAS, CORES_CATEGORIA, MEIOS_PAGAMENTO, LABEL_MEIO } from '../types'
 
@@ -214,81 +215,155 @@ export function RecorrentesPage({ lista, onSalvar, pessoas, origensPorMeio }: Re
         </div>
       )}
 
-      {modalAberto && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && setModalAberto(false)}>
-          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
-              <h3 className="text-lg font-semibold">{editando ? 'Editar Recorrente' : 'Nova Recorrente'}</h3>
-              <button onClick={() => setModalAberto(false)} className="text-slate-400 hover:text-white">✕</button>
-            </div>
-            <form onSubmit={salvar} className="p-6 space-y-4">
-              <div>
-                <label className="text-xs text-slate-400 mb-1.5 block">Nome</label>
-                <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Netflix, Financiamento carro..."
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500" autoFocus />
+      {modalAberto &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm"
+            style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+            onClick={(e) => e.target === e.currentTarget && setModalAberto(false)}
+          >
+            <div className="w-full sm:max-w-md max-h-[min(92vh,920px)] flex flex-col bg-slate-900 border border-slate-700 rounded-t-2xl sm:rounded-2xl shadow-2xl">
+              <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-800 shrink-0">
+                <h3 className="text-lg font-semibold">
+                  {editando ? 'Editar Recorrente' : 'Nova Recorrente'}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setModalAberto(false)}
+                  className="w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center"
+                >
+                  ✕
+                </button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <form onSubmit={salvar} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 overscroll-contain">
                 <div>
-                  <label className="text-xs text-slate-400 mb-1.5 block">Valor (R$)</label>
-                  <input value={valor} onChange={(e) => setValor(e.target.value)} inputMode="decimal" placeholder="0,00"
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500" />
+                  <label className="text-xs text-slate-400 mb-1.5 block">Nome</label>
+                  <input
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    placeholder="Netflix, Financiamento carro..."
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-slate-400 mb-1.5 block">Valor (R$)</label>
+                    <input
+                      value={valor}
+                      onChange={(e) => setValor(e.target.value)}
+                      inputMode="decimal"
+                      placeholder="0,00"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400 mb-1.5 block">Dia do mês</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="28"
+                      value={dia}
+                      onChange={(e) => setDia(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 mb-1.5 block">Dia do mês</label>
-                  <input type="number" min="1" max="28" value={dia} onChange={(e) => setDia(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500" />
+                  <label className="text-xs text-slate-400 mb-1.5 block">Pessoa</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {pessoas.map((p, idx) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPessoa(p)}
+                        className={`py-2 rounded-lg text-sm font-medium transition ${
+                          pessoa === p
+                            ? idx % 2 === 0
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-pink-600 text-white'
+                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="text-xs text-slate-400 mb-1.5 block">Pessoa</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {pessoas.map((p, idx) => (
-                    <button key={p} type="button" onClick={() => setPessoa(p)}
-                      className={`py-2 rounded-lg text-sm font-medium transition ${pessoa === p ? (idx % 2 === 0 ? 'bg-indigo-600 text-white' : 'bg-pink-600 text-white') : 'bg-slate-800 text-slate-400'}`}>
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-slate-400 mb-1.5 block">Categoria</label>
-                <select value={categoria} onChange={(e) => setCategoria(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500">
-                  {CATEGORIAS.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-400 mb-1.5 block">Meio de pagamento</label>
-                  <select value={meio} onChange={(e) => {
-                    const m = e.target.value as MeioPagamento
-                    setMeio(m)
-                    const origs = origensPorMeio[m]
-                    setCartao(origs[0] || '')
-                  }}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500">
-                    {MEIOS_PAGAMENTO.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+                  <label className="text-xs text-slate-400 mb-1.5 block">Categoria</label>
+                  <select
+                    value={categoria}
+                    onChange={(e) => setCategoria(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500"
+                  >
+                    {CATEGORIAS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
                   </select>
                 </div>
-                {meio !== 'dinheiro' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-slate-400 mb-1.5 block">Origem</label>
-                    <select value={cartao} onChange={(e) => setCartao(e.target.value)}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500">
-                      {(origensPorMeio[meio] || []).map((o) => <option key={o} value={o}>{o}</option>)}
+                    <label className="text-xs text-slate-400 mb-1.5 block">Meio de pagamento</label>
+                    <select
+                      value={meio}
+                      onChange={(e) => {
+                        const m = e.target.value as MeioPagamento
+                        setMeio(m)
+                        const origs = origensPorMeio[m]
+                        setCartao(origs[0] || '')
+                      }}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500"
+                    >
+                      {MEIOS_PAGAMENTO.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
-                )}
-              </div>
-              {erro && <p className="text-sm text-rose-400">{erro}</p>}
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setModalAberto(false)} className="flex-1 py-2.5 rounded-lg bg-slate-800 text-sm text-slate-300">Cancelar</button>
-                <button type="submit" className="flex-1 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-sm font-medium text-white">Salvar</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                  {meio !== 'dinheiro' && (
+                    <div>
+                      <label className="text-xs text-slate-400 mb-1.5 block">Origem</label>
+                      <select
+                        value={cartao}
+                        onChange={(e) => setCartao(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500"
+                      >
+                        {(origensPorMeio[meio] || []).map((o) => (
+                          <option key={o} value={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+                {erro && <p className="text-sm text-rose-400">{erro}</p>}
+                <div
+                  className="flex gap-3 pt-2 pb-2"
+                  style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))' }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setModalAberto(false)}
+                    className="flex-1 py-2.5 rounded-lg bg-slate-800 text-sm text-slate-300"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-sm font-medium text-white"
+                  >
+                    Salvar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }
