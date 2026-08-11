@@ -457,6 +457,50 @@ function App() {
       }
       setDespesasLista((prev) => [novo, ...prev])
 
+      // Despesa fixa → cadastra modelo em Recorrentes/Fixas
+      if (despesa.despesaFixa) {
+        const dia = despesa.diaVencimento || parseInt(despesa.data.split('/')[0], 10) || 10
+        setRecorrentes((prev) => {
+          const existe = prev.find(
+            (r) =>
+              (r.tipo === 'despesa' || !r.tipo) &&
+              r.nome.toLowerCase() === despesa.nome.toLowerCase() &&
+              r.pessoa === despesa.pessoa,
+          )
+          if (existe) {
+            return prev.map((r) =>
+              r.id === existe.id
+                ? {
+                    ...r,
+                    valor: despesa.valor,
+                    categoria: despesa.categoria,
+                    cartao: despesa.cartao,
+                    meio: despesa.meio,
+                    diaVencimento: dia,
+                    ativa: true,
+                    tipo: 'despesa' as const,
+                  }
+                : r,
+            )
+          }
+          return [
+            {
+              id: Date.now() + 1,
+              nome: despesa.nome,
+              valor: despesa.valor,
+              pessoa: despesa.pessoa,
+              categoria: despesa.categoria,
+              cartao: despesa.cartao,
+              meio: despesa.meio,
+              diaVencimento: dia,
+              ativa: true,
+              tipo: 'despesa' as const,
+            },
+            ...prev,
+          ]
+        })
+      }
+
       // Gera automaticamente as parcelas nos meses seguintes
       if (despesa.parcelado && total > 1) {
         gerarParcelasFuturas(
@@ -596,7 +640,7 @@ function App() {
     faturas: 'Todas as despesas do mês',
     receitas: 'Todas as receitas do mês',
     pessoas: 'Controle individual de gastos',
-    recorrentes: 'Assinaturas e lançamentos automáticos',
+    recorrentes: 'Despesas e receitas que se repetem todo mês',
     objetivos: 'Metas de longo prazo da família',
     historico: 'Comparativo e fechamento de meses',
     sync: 'Sincronizar PC e celular',
