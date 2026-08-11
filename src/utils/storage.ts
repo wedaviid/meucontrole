@@ -430,3 +430,60 @@ export function resumoMes(mes: string) {
     fechado: isMesFechado(mes),
   }
 }
+
+/** Nome base sem sufixo 3/12 */
+export function nomeBaseParcela(nome: string): string {
+  return nome.replace(/\s+\d+\/\d+$/, '').trim()
+}
+
+export type ModoExclusaoParcela = 'somente' | 'futuras' | 'todas'
+
+function parcelaDoMesmoGrupo(d: FaturaItem, item: FaturaItem): boolean {
+  if (!d.parcelado || !item.parcelado) return false
+  if (d.totalParcelas !== item.totalParcelas) return false
+  if (d.pessoa !== item.pessoa) return false
+  if (nomeBaseParcela(d.nome) !== nomeBaseParcela(item.nome)) return false
+  return true
+}
+
+/**
+ * Remove parcelas relacionadas em outros meses (e no atual conforme modo).
+ * Retorna a lista do mês atual já filtrada.
+ */
+export function excluirParcelamento(
+  mesAtual: string,
+  item: FaturaItem,
+  modo: ModoExclusaoParcela,
+  listaMesAtual: FaturaItem[],
+): FaturaItem[] {
+  if (modo === 'somente' || !item.parcelado) {
+    return listaMesAtual.filter((d) => d.id !== item.id)
+  }
+
+  const atualNum = item.parcelaAtual || 1
+  const meses = listarMesesDisponiveis()
+
+  for (const mes of meses) {
+    if (modo === 'futuras' && mes < mesAtual) continue
+
+    if (mes === mesAtual) continue // tratado no return
+
+    const lista = carregarDespesas(mes)
+    const filtrada = lista.filter((d) => {
+      if (!parcelaDoMesmoGrupo(d, item)) return true
+      if (modo === 'todas') return false
+      // futuras: remove se parcelaAtual >= atualNum (ou qualquer no mês futuro)
+      const n = d.parcelaAtual || 0
+      return n < atualNum
+    })
+    if (filtrada.length !== lista.length) salvarDespesas(filtrada, mes)
+  }
+
+  return listaMesAtual.filter((d) => {
+    if (d.id === item.id) return false
+    if (!parcelaDoMesmoGrupo(d, item)) return true
+    if (modo === 'todas') return false
+    const n = d.parcelaAtual || 0
+    return n < atualNum
+  })
+}

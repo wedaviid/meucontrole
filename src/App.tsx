@@ -14,6 +14,7 @@ import {
   salvarRecorrentes,
   aplicarRecorrentesNoMes,
   gerarParcelasFuturas,
+  excluirParcelamento,
   carregarObjetivos,
   salvarObjetivos,
   carregarMetas,
@@ -42,6 +43,7 @@ import { ResumoMes } from './components/ResumoMes'
 import { ReceitasSection } from './components/ReceitasSection'
 import { SyncPage } from './components/SyncPage'
 import { ConfigPage } from './components/ConfigPage'
+import { ExcluirDespesaModal } from './components/ExcluirDespesaModal'
 import { SugestaoRecorrente, detectarCandidatosRecorrentes } from './components/SugestaoRecorrente'
 
 
@@ -67,6 +69,7 @@ function App() {
   const [mesAtual, setMesAtualState] = useState(() => getMesAtual())
   const [mesesDisponiveis, setMesesDisponiveis] = useState(() => listarMesesDisponiveis())
 
+  const [excluindoDespesa, setExcluindoDespesa] = useState<FaturaItem | null>(null)
   const [modalDespesa, setModalDespesa] = useState(false)
   const [modalReceita, setModalReceita] = useState(false)
   const [menuFab, setMenuFab] = useState(false)
@@ -528,7 +531,13 @@ function App() {
     }
   }
 
-  const handleExcluirDespesa = (id: number) => setDespesasLista((prev) => prev.filter((d) => d.id !== id))
+  const handlePedirExcluirDespesa = (item: FaturaItem) => setExcluindoDespesa(item)
+  const handleConfirmarExcluirDespesa = (modo: 'somente' | 'futuras' | 'todas') => {
+    if (!excluindoDespesa) return
+    setDespesasLista((prev) => excluirParcelamento(mesAtual, excluindoDespesa, modo, prev))
+    setExcluindoDespesa(null)
+  }
+
   const handleEditarDespesa = (item: FaturaItem) => { setEditando(item); setModalDespesa(true) }
   const handleSalvarReceita = (receita: Omit<Receita, 'id'> & { id?: number }) => {
     const full: Receita = {
@@ -741,7 +750,7 @@ function App() {
           {paginaVisivel === 'faturas' && (
             <FaturasPage
               pessoas={config.pessoas}
-              origensLista={[...config.origens.credito, ...config.origens.debito, ...config.origens.pix]} lancamentos={despesasLista} onExcluir={handleExcluirDespesa} onEditar={handleEditarDespesa} />
+              origensLista={[...config.origens.credito, ...config.origens.debito, ...config.origens.pix]} lancamentos={despesasLista} onExcluir={handlePedirExcluirDespesa} onEditar={handleEditarDespesa} />
           )}
 
           {paginaVisivel === 'receitas' && (
@@ -809,6 +818,13 @@ function App() {
           )}
         </div>
       </main>
+
+      <ExcluirDespesaModal
+        aberto={!!excluindoDespesa}
+        item={excluindoDespesa}
+        onFechar={() => setExcluindoDespesa(null)}
+        onConfirmar={handleConfirmarExcluirDespesa}
+      />
 
       <NovaDespesaModal
         pessoas={config.pessoas}

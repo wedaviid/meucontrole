@@ -3,7 +3,7 @@ import type { FaturaItem } from '../types'
 
 interface FaturasPageProps {
   lancamentos: FaturaItem[]
-  onExcluir?: (id: number) => void
+  onExcluir?: (item: FaturaItem) => void
   onEditar?: (item: FaturaItem) => void
   pessoas?: string[]
   origensLista?: string[]
@@ -18,7 +18,7 @@ export function FaturasPage({ lancamentos, onExcluir, onEditar, pessoas = [], or
     ...lancamentos.map((l) => l.cartao).filter(Boolean),
   ]))]
   const [busca, setBusca] = useState('')
-  const [confirmExcluir, setConfirmExcluir] = useState<number | null>(null)
+
 
   const filtrados = lancamentos.filter((l) => {
     const matchPessoa = pessoaFiltro === 'Todos' || l.pessoa === pessoaFiltro
@@ -36,14 +36,8 @@ export function FaturasPage({ lancamentos, onExcluir, onEditar, pessoas = [], or
   const totalGeral = lancamentos.filter(isPago).reduce((a, b) => a + b.valor, 0)
   const totalPendenteGeral = lancamentos.filter((l) => !isPago(l)).reduce((a, b) => a + b.valor, 0)
 
-  const handleExcluir = (id: number) => {
-    if (confirmExcluir === id) {
-      onExcluir?.(id)
-      setConfirmExcluir(null)
-    } else {
-      setConfirmExcluir(id)
-      setTimeout(() => setConfirmExcluir(null), 3000)
-    }
+  const handleExcluir = (item: FaturaItem) => {
+    onExcluir?.(item)
   }
 
   return (
@@ -183,13 +177,9 @@ export function FaturasPage({ lancamentos, onExcluir, onEditar, pessoas = [], or
                   )}
                   {onExcluir && (
                     <button
-                      onClick={() => handleExcluir(l.id)}
-                      className={`w-7 h-7 rounded-md flex items-center justify-center transition ${
-                        confirmExcluir === l.id
-                          ? 'bg-rose-600 text-white'
-                          : 'hover:bg-slate-700 text-slate-400 hover:text-rose-400'
-                      }`}
-                      title={confirmExcluir === l.id ? 'Clique novamente para confirmar' : 'Excluir'}
+                      onClick={() => handleExcluir(l)}
+                      className="w-7 h-7 rounded-md flex items-center justify-center transition hover:bg-slate-700 text-slate-400 hover:text-rose-400"
+                      title="Excluir"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
