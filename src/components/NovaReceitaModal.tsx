@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import type { Receita, ContaItem } from '../types'
 import { CATEGORIAS_RECEITA } from '../types'
 import { sugerirCategoriaReceita } from '../utils/categorizar'
@@ -123,15 +124,16 @@ export function NovaReceitaModal({
 
   if (!visivel && !aberto) return null
 
-  return (
+  return createPortal(
     <div
-      className={`fixed inset-0 z-[200] flex items-center justify-center p-4 transition-all duration-200 ${
+      className={`fixed inset-0 z-[300] flex items-end sm:items-center justify-center sm:p-4 transition-all duration-200 ${
         aberto ? 'bg-black/60 backdrop-blur-sm opacity-100' : 'bg-black/0 opacity-0 pointer-events-none'
       }`}
+      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
       onClick={(e) => e.target === e.currentTarget && onFechar()}
     >
       <div
-        className={`w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl transition-all duration-200 max-h-[90vh] overflow-y-auto ${
+        className={`w-full sm:max-w-md bg-slate-900 border border-slate-700 rounded-t-2xl sm:rounded-2xl shadow-2xl transition-all duration-200 max-h-[min(92vh,900px)] flex flex-col ${
           aberto ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
         }`}
       >
@@ -144,7 +146,7 @@ export function NovaReceitaModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto flex-1 overscroll-contain">
           <div>
             <label className="text-xs text-slate-400 mb-1.5 block">Descrição</label>
             <input
@@ -321,6 +323,7 @@ export function NovaReceitaModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

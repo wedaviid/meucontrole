@@ -180,7 +180,9 @@ function App() {
     // Aplica receitas recorrentes ativas se o mês ainda não tiver
     const recReceitas = carregarRecorrentes().filter((r) => r.ativa && r.tipo === 'receita')
     for (const rr of recReceitas) {
-      const jaTem = receitas.some((r) => r.nome.toLowerCase() === rr.nome.toLowerCase())
+      const jaTem = receitas.some(
+        (r) => r.nome.toLowerCase() === rr.nome.toLowerCase() && r.pessoa === rr.pessoa,
+      )
       if (!jaTem) {
         receitas = [
           {
@@ -439,37 +441,21 @@ function App() {
       )
       setEditando(null)
     } else {
-      const novo: FaturaItem = {
-        id: Date.now(),
-        nome: nomeFinal,
-        pessoa: despesa.pessoa,
-        categoria: despesa.categoria,
-        valor: despesa.valor,
-        sigla,
-        cor,
-        data: despesa.data,
-        cartao: despesa.cartao,
-        meio: despesa.meio,
-        parcelado: despesa.parcelado,
-        parcelaAtual,
-        totalParcelas: despesa.parcelado ? total : undefined,
-        pago: despesa.pago,
-      }
-      setDespesasLista((prev) => [novo, ...prev])
-
-      // Despesa fixa → cadastra modelo em Recorrentes/Fixas
+      let recorrenteId: number | undefined
       if (despesa.despesaFixa) {
         const dia = despesa.diaVencimento || parseInt(despesa.data.split('/')[0], 10) || 10
+        const existe = recorrentes.find(
+          (r) =>
+            (r.tipo === 'despesa' || !r.tipo) &&
+            r.nome.toLowerCase() === despesa.nome.toLowerCase() &&
+            r.pessoa === despesa.pessoa,
+        )
+        recorrenteId = existe?.id ?? Date.now() + 1
         setRecorrentes((prev) => {
-          const existe = prev.find(
-            (r) =>
-              (r.tipo === 'despesa' || !r.tipo) &&
-              r.nome.toLowerCase() === despesa.nome.toLowerCase() &&
-              r.pessoa === despesa.pessoa,
-          )
-          if (existe) {
+          const ja = prev.find((r) => r.id === recorrenteId)
+          if (ja) {
             return prev.map((r) =>
-              r.id === existe.id
+              r.id === recorrenteId
                 ? {
                     ...r,
                     valor: despesa.valor,
@@ -485,7 +471,7 @@ function App() {
           }
           return [
             {
-              id: Date.now() + 1,
+              id: recorrenteId!,
               nome: despesa.nome,
               valor: despesa.valor,
               pessoa: despesa.pessoa,
@@ -500,6 +486,25 @@ function App() {
           ]
         })
       }
+
+      const novo: FaturaItem = {
+        id: Date.now(),
+        nome: nomeFinal,
+        pessoa: despesa.pessoa,
+        categoria: despesa.categoria,
+        valor: despesa.valor,
+        sigla,
+        cor,
+        data: despesa.data,
+        cartao: despesa.cartao,
+        meio: despesa.meio,
+        parcelado: despesa.parcelado,
+        parcelaAtual,
+        totalParcelas: despesa.parcelado ? total : undefined,
+        pago: despesa.pago,
+        recorrenteId,
+      }
+      setDespesasLista((prev) => [novo, ...prev])
 
       // Gera automaticamente as parcelas nos meses seguintes
       if (despesa.parcelado && total > 1) {

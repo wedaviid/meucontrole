@@ -178,7 +178,9 @@ export function salvarRecorrentes(lista: Recorrente[]): void {
 
 /** Gera despesas do mês a partir dos recorrentes ativos (se ainda não existirem) */
 export function aplicarRecorrentesNoMes(mes: string, despesasAtuais: FaturaItem[]): FaturaItem[] {
-  const recorrentes = carregarRecorrentes().filter((r) => r.ativa)
+  const recorrentes = carregarRecorrentes().filter(
+    (r) => r.ativa && (r.tipo === 'despesa' || !r.tipo),
+  )
   if (recorrentes.length === 0) return despesasAtuais
 
   const [, mesNum] = mes.split('-')
@@ -189,6 +191,14 @@ export function aplicarRecorrentesNoMes(mes: string, despesasAtuais: FaturaItem[
   const novos: FaturaItem[] = []
   for (const r of recorrentes) {
     if (jaGerados.has(r.id)) continue
+    // Evita duplicar se já existe lançamento manual com mesmo nome/pessoa (dados antigos sem recorrenteId)
+    const jaManual = despesasAtuais.some(
+      (d) =>
+        !d.recorrenteId &&
+        d.nome.toLowerCase() === r.nome.toLowerCase() &&
+        d.pessoa === r.pessoa,
+    )
+    if (jaManual) continue
     const dia = String(Math.min(r.diaVencimento, 28)).padStart(2, '0')
     novos.push({
       id: Date.now() + r.id,
@@ -403,7 +413,7 @@ export function gerarParcelasFuturas(
 export function resumoMes(mes: string) {
   const despesas = carregarDespesas(mes)
   const receitas = carregarReceitas(mes)
-  const totalReceitas = receitas.reduce((a, r) => a + r.valor, 0)
+  const totalReceitas = receitas.filter((r) => r.recebido !== false).reduce((a, r) => a + r.valor, 0)
   const totalDespesas = despesas.filter((d) => d.pago !== false).reduce((a, d) => a + d.valor, 0)
   return {
     mes,
