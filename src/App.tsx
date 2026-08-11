@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type { Pagina, FaturaItem, Receita, Recorrente, Objetivo, MetaMensal, AppConfig, MeioPagamento } from './types'
-import { percentuaisDoMetodo } from './types'
+import { percentuaisDoMetodo, nomesEssenciais, nomesInvestimentos, categoriasDespesaAtivas, categoriasReceitaAtivas } from './types'
 import { CORES_CATEGORIA } from './types'
 import {
   carregarDespesas,
@@ -44,9 +44,6 @@ import { SyncPage } from './components/SyncPage'
 import { ConfigPage } from './components/ConfigPage'
 import { SugestaoRecorrente, detectarCandidatosRecorrentes } from './components/SugestaoRecorrente'
 
-const CAT_ESSENCIAIS = ['Essenciais', 'Saúde']
-const CAT_INVESTIMENTOS = ['Investimentos']
-// Tudo que não é essencial nem investimento vai para os 30% (Não Essenciais)
 
 const MESES_PT = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -225,14 +222,14 @@ function App() {
   const totalDespesas = useMemo(() => despesasLista.filter((d) => d.pago !== false).reduce((a, d) => a + d.valor, 0), [despesasLista])
   const saldo = totalReceitas - totalDespesas
 
-  const totalEssenciais = useMemo(
-    () => despesasLista.filter((d) => d.pago !== false && CAT_ESSENCIAIS.includes(d.categoria)).reduce((a, d) => a + d.valor, 0),
-    [despesasLista]
-  )
-  const totalInvestimentos = useMemo(
-    () => despesasLista.filter((d) => d.pago !== false && CAT_INVESTIMENTOS.includes(d.categoria)).reduce((a, d) => a + d.valor, 0),
-    [despesasLista]
-  )
+  const totalEssenciais = useMemo(() => {
+    const ess = nomesEssenciais(config)
+    return despesasLista.filter((d) => d.pago !== false && ess.includes(d.categoria)).reduce((a, d) => a + d.valor, 0)
+  }, [despesasLista, config])
+  const totalInvestimentos = useMemo(() => {
+    const inv = nomesInvestimentos(config)
+    return despesasLista.filter((d) => d.pago !== false && inv.includes(d.categoria)).reduce((a, d) => a + d.valor, 0)
+  }, [despesasLista, config])
   // 30% = tudo que não é essencial nem investimento
   const totalNaoEssenciais = useMemo(
     () => Math.max(0, totalDespesas - totalEssenciais - totalInvestimentos),
@@ -816,6 +813,7 @@ function App() {
       <NovaDespesaModal
         pessoas={config.pessoas}
         origensPorMeio={origensPorMeio}
+        categorias={categoriasDespesaAtivas(config).map((c) => c.nome)}
         aberto={modalDespesa}
         onFechar={() => { setModalDespesa(false); setEditando(null) }}
         onSalvar={handleSalvarDespesa}
@@ -869,6 +867,7 @@ function App() {
 
       <NovaReceitaModal
         pessoas={config.pessoas}
+        categorias={categoriasReceitaAtivas(config).map((c) => c.nome)}
         contas={config.contas || []}
         atalhoSalario={atalhoSalario}
         aberto={modalReceita}

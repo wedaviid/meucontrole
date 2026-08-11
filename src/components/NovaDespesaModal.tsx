@@ -11,6 +11,7 @@ interface NovaDespesaModalProps {
   despesaInicial?: FaturaItem | null
   pessoas: string[]
   origensPorMeio: Record<MeioPagamento, string[]>
+  categorias?: string[]
 }
 
 export interface NovaDespesa {
@@ -81,6 +82,7 @@ export function NovaDespesaModal({
   despesaInicial,
   pessoas,
   origensPorMeio,
+  categorias,
 }: NovaDespesaModalProps) {
   const [nome, setNome] = useState('')
   const [valor, setValor] = useState('')
@@ -100,6 +102,7 @@ export function NovaDespesaModal({
   const [categoriaManual, setCategoriaManual] = useState(false)
 
   const isEditando = !!despesaInicial
+  const listaCat = categorias?.length ? categorias : [...CATEGORIAS]
   const origens = useMemo(() => origensPorMeio[meio] || [], [meio, origensPorMeio])
   const precisaOrigem = meio !== 'dinheiro'
 
@@ -333,7 +336,7 @@ export function NovaDespesaModal({
               }}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500"
             >
-              {CATEGORIAS.map((c) => (
+              {listaCat.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>

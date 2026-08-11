@@ -13,6 +13,7 @@ interface NovaReceitaModalProps {
   receitaInicial?: Receita | null
   /** Último valor de salário para atalho */
   atalhoSalario?: number
+  categorias?: string[]
 }
 
 export function NovaReceitaModal({
@@ -23,7 +24,9 @@ export function NovaReceitaModal({
   contas,
   receitaInicial,
   atalhoSalario,
+  categorias,
 }: NovaReceitaModalProps) {
+  const listaCatRec = categorias?.length ? categorias : [...CATEGORIAS_RECEITA]
   const contasDestino = contas.filter((c) => c.tipo === 'conta' || c.incluirSaldo)
   const contasTodas = contasDestino.length ? contasDestino : contas.filter((c) => c.tipo === 'conta')
 
@@ -193,7 +196,7 @@ export function NovaReceitaModal({
           <div>
             <label className="text-xs text-slate-400 mb-1.5 block">Categoria</label>
             <div className="grid grid-cols-3 gap-1.5">
-              {CATEGORIAS_RECEITA.map((c) => (
+              {listaCatRec.map((c) => (
                 <button
                   key={c}
                   type="button"

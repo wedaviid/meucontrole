@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { AppConfig, ContaItem, MetodoOrcamento, PercentuaisOrcamento } from '../types'
-import { origensDeContas, METODOS_ORCAMENTO, CATEGORIAS } from '../types'
+import type { AppConfig, ContaItem, MetodoOrcamento, PercentuaisOrcamento, CategoriaItem, TipoOrcamentoCategoria } from '../types'
+import { origensDeContas, METODOS_ORCAMENTO, CATEGORIAS_DESPESA_PADRAO, CATEGORIAS_RECEITA_PADRAO } from '../types'
 
 interface ConfigPageProps {
   config: AppConfig
@@ -111,6 +111,15 @@ export function ConfigPage({ config, onSalvar }: ConfigPageProps) {
   const [perc, setPerc] = useState<PercentuaisOrcamento>(
     config.percentuais || { essenciais: 50, naoEssenciais: 30, investimentos: 20 },
   )
+  const [catDespesa, setCatDespesa] = useState<CategoriaItem[]>(
+    config.categoriasDespesa?.length ? config.categoriasDespesa.map((c) => ({ ...c })) : CATEGORIAS_DESPESA_PADRAO.map((c) => ({ ...c })),
+  )
+  const [catReceita, setCatReceita] = useState<CategoriaItem[]>(
+    config.categoriasReceita?.length ? config.categoriasReceita.map((c) => ({ ...c })) : CATEGORIAS_RECEITA_PADRAO.map((c) => ({ ...c })),
+  )
+  const [abaCat, setAbaCat] = useState<'despesa' | 'receita'>('despesa')
+  const [novaCatNome, setNovaCatNome] = useState('')
+  const [novaCatTipo, setNovaCatTipo] = useState<TipoOrcamentoCategoria>('nao_essencial')
 
   useEffect(() => {
     setNomeEspaco(config.nomeEspaco)
@@ -118,6 +127,16 @@ export function ConfigPage({ config, onSalvar }: ConfigPageProps) {
     setContas(config.contas?.length ? config.contas.map((c) => ({ ...c })) : [])
     setMetodo(config.metodoOrcamento || '50-30-20')
     setPerc(config.percentuais || { essenciais: 50, naoEssenciais: 30, investimentos: 20 })
+    setCatDespesa(
+      config.categoriasDespesa?.length
+        ? config.categoriasDespesa.map((c) => ({ ...c }))
+        : CATEGORIAS_DESPESA_PADRAO.map((c) => ({ ...c })),
+    )
+    setCatReceita(
+      config.categoriasReceita?.length
+        ? config.categoriasReceita.map((c) => ({ ...c }))
+        : CATEGORIAS_RECEITA_PADRAO.map((c) => ({ ...c })),
+    )
   }, [config])
 
   const addConta = () => {
@@ -158,6 +177,8 @@ export function ConfigPage({ config, onSalvar }: ConfigPageProps) {
       origens: origensDeContas(contasFinais),
       metodoOrcamento: metodo,
       percentuais: metodo === 'personalizado' ? perc : config.percentuais,
+      categoriasDespesa: catDespesa,
+      categoriasReceita: catReceita,
     })
     setMsg('Configurações salvas')
     setTimeout(() => setMsg(''), 2500)
@@ -172,11 +193,6 @@ export function ConfigPage({ config, onSalvar }: ConfigPageProps) {
     preferencias: 'Preferências',
   }
 
-  const essenciaisSet = new Set(['Essenciais', 'Saúde'])
-  const investimentosSet = new Set(['Investimentos'])
-  const essenciais = CATEGORIAS.filter((c) => essenciaisSet.has(c))
-  const investimentos = CATEGORIAS.filter((c) => investimentosSet.has(c))
-  const naoEssenciais = CATEGORIAS.filter((c) => !essenciaisSet.has(c) && !investimentosSet.has(c))
 
   return (
     <div className="space-y-4 max-w-xl">
@@ -292,29 +308,184 @@ export function ConfigPage({ config, onSalvar }: ConfigPageProps) {
 
       {secao === 'categorias' && (
         <div className="space-y-4">
-          <p className="text-xs text-slate-500">
-            Categorias padrão do app e como entram no orçamento. Criar categorias custom vem na próxima etapa.
-          </p>
-          {(
-            [
-              ['Essenciais', essenciais],
-              ['Não essenciais', naoEssenciais],
-              ['Investimentos', investimentos],
-            ] as const
-          ).map(([titulo, lista]) => (
-            <div key={titulo} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-slate-800">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{titulo}</h3>
+          <div className="flex gap-2 p-1 bg-slate-900 border border-slate-800 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setAbaCat('despesa')}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+                abaCat === 'despesa' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Despesas
+            </button>
+            <button
+              type="button"
+              onClick={() => setAbaCat('receita')}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+                abaCat === 'receita' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Receitas
+            </button>
+          </div>
+
+          {abaCat === 'despesa' && (
+            <div className="space-y-3">
+              {(
+                [
+                  ['essencial', 'Essenciais', 'text-emerald-400'],
+                  ['nao_essencial', 'Não essenciais', 'text-amber-400'],
+                  ['investimento', 'Investimentos', 'text-sky-400'],
+                ] as const
+              ).map(([tipo, titulo, cor]) => {
+                const itens = catDespesa.filter((c) => (c.tipoOrcamento || 'nao_essencial') === tipo && c.ativa !== false)
+                return (
+                  <div key={tipo} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
+                      <h3 className={`text-xs font-semibold uppercase tracking-wide ${cor}`}>{titulo}</h3>
+                      <span className="text-[11px] text-slate-500">{itens.length}</span>
+                    </div>
+                    <ul className="divide-y divide-slate-800/80">
+                      {itens.map((c) => (
+                        <li key={c.id} className="px-4 py-2.5 flex items-center gap-2">
+                          <input
+                            value={c.nome}
+                            onChange={(e) =>
+                              setCatDespesa(catDespesa.map((x) => (x.id === c.id ? { ...x, nome: e.target.value } : x)))
+                            }
+                            className="flex-1 bg-transparent text-sm text-white focus:outline-none focus:bg-slate-800 rounded px-1 py-0.5"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setCatDespesa(catDespesa.filter((x) => x.id !== c.id))}
+                            className="text-slate-500 hover:text-rose-400 text-sm px-1"
+                            title="Remover"
+                          >
+                            ×
+                          </button>
+                        </li>
+                      ))}
+                      {itens.length === 0 && (
+                        <li className="px-4 py-3 text-xs text-slate-500">Nenhuma neste grupo</li>
+                      )}
+                    </ul>
+                  </div>
+                )
+              })}
+
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <p className="text-xs font-medium text-slate-300">Nova categoria de despesa</p>
+                <input
+                  value={novaCatNome}
+                  onChange={(e) => setNovaCatNome(e.target.value)}
+                  placeholder="Ex: Academia, Igreja..."
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500"
+                />
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      ['essencial', 'Essencial'],
+                      ['nao_essencial', 'Não essencial'],
+                      ['investimento', 'Investimento'],
+                    ] as const
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setNovaCatTipo(id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                        novaCatTipo === id
+                          ? 'bg-sky-600 text-white'
+                          : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const n = novaCatNome.trim()
+                    if (!n) return
+                    if (catDespesa.some((c) => c.nome.toLowerCase() === n.toLowerCase())) return
+                    setCatDespesa([
+                      ...catDespesa,
+                      {
+                        id: `d-${Date.now()}`,
+                        nome: n,
+                        tipoOrcamento: novaCatTipo,
+                        ativa: true,
+                      },
+                    ])
+                    setNovaCatNome('')
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-sm font-medium text-white"
+                >
+                  + Adicionar categoria
+                </button>
               </div>
-              <ul className="divide-y divide-slate-800/80">
-                {lista.map((c) => (
-                  <li key={c} className="px-4 py-2.5 text-sm text-white">
-                    {c}
-                  </li>
-                ))}
-              </ul>
             </div>
-          ))}
+          )}
+
+          {abaCat === 'receita' && (
+            <div className="space-y-3">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-slate-800">
+                  <h3 className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Receitas</h3>
+                </div>
+                <ul className="divide-y divide-slate-800/80">
+                  {catReceita
+                    .filter((c) => c.ativa !== false)
+                    .map((c) => (
+                      <li key={c.id} className="px-4 py-2.5 flex items-center gap-2">
+                        <input
+                          value={c.nome}
+                          onChange={(e) =>
+                            setCatReceita(catReceita.map((x) => (x.id === c.id ? { ...x, nome: e.target.value } : x)))
+                          }
+                          className="flex-1 bg-transparent text-sm text-white focus:outline-none focus:bg-slate-800 rounded px-1 py-0.5"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setCatReceita(catReceita.filter((x) => x.id !== c.id))}
+                          className="text-slate-500 hover:text-rose-400 text-sm px-1"
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <p className="text-xs font-medium text-slate-300">Nova categoria de receita</p>
+                <div className="flex gap-2">
+                  <input
+                    value={novaCatNome}
+                    onChange={(e) => setNovaCatNome(e.target.value)}
+                    placeholder="Ex: Comissão, Aluguel..."
+                    className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const n = novaCatNome.trim()
+                      if (!n) return
+                      if (catReceita.some((c) => c.nome.toLowerCase() === n.toLowerCase())) return
+                      setCatReceita([
+                        ...catReceita,
+                        { id: `r-${Date.now()}`, nome: n, ativa: true },
+                      ])
+                      setNovaCatNome('')
+                    }}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-medium text-white"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -398,7 +569,7 @@ export function ConfigPage({ config, onSalvar }: ConfigPageProps) {
         </div>
       )}
 
-      {secao !== 'menu' && secao !== 'categorias' && (
+      {secao !== 'menu' && (
         <div className="flex flex-col sm:flex-row gap-2 items-start">
           <button
             type="button"

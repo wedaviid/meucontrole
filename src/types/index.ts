@@ -167,6 +167,10 @@ export interface AppConfig {
   metodoOrcamento?: MetodoOrcamento
   /** Usado quando metodo = personalizado (deve somar 100) */
   percentuais?: PercentuaisOrcamento
+  /** Categorias de despesa (com tipo no orçamento) */
+  categoriasDespesa?: CategoriaItem[]
+  /** Categorias de receita */
+  categoriasReceita?: CategoriaItem[]
 }
 
 export const METODOS_ORCAMENTO: {
@@ -229,6 +233,8 @@ export const CONFIG_PADRAO: AppConfig = {
   contas: [],
   metodoOrcamento: '50-30-20',
   percentuais: { essenciais: 50, naoEssenciais: 30, investimentos: 20 },
+  categoriasDespesa: CATEGORIAS_DESPESA_PADRAO,
+  categoriasReceita: CATEGORIAS_RECEITA_PADRAO,
 }
 
 /** Deriva listas de origem a partir das contas cadastradas */
@@ -257,22 +263,88 @@ export function contasDeOrigens(origens: AppConfig['origens']): ContaItem[] {
   return lista.length ? lista : [...CONTAS_PADRAO]
 }
 
+export function categoriasDespesaAtivas(config: AppConfig): CategoriaItem[] {
+  const lista = config.categoriasDespesa?.length
+    ? config.categoriasDespesa
+    : CATEGORIAS_DESPESA_PADRAO
+  return lista.filter((c) => c.ativa !== false)
+}
+
+export function categoriasReceitaAtivas(config: AppConfig): CategoriaItem[] {
+  const lista = config.categoriasReceita?.length
+    ? config.categoriasReceita
+    : CATEGORIAS_RECEITA_PADRAO
+  return lista.filter((c) => c.ativa !== false)
+}
+
+export function nomesEssenciais(config: AppConfig): string[] {
+  return categoriasDespesaAtivas(config)
+    .filter((c) => c.tipoOrcamento === 'essencial')
+    .map((c) => c.nome)
+}
+
+export function nomesInvestimentos(config: AppConfig): string[] {
+  return categoriasDespesaAtivas(config)
+    .filter((c) => c.tipoOrcamento === 'investimento')
+    .map((c) => c.nome)
+}
+
 export type Pagina = 'dashboard' | 'pessoas' | 'faturas' | 'receitas' | 'recorrentes' | 'objetivos' | 'historico' | 'sync' | 'config'
 
-export const CATEGORIAS = [
-  'Alimentação',
-  'Assinatura',
-  'Parcelamento',
-  'Compras',
-  'Cuidados Pessoais',
-  'Estudos',
-  'Pet',
-  'Vestuário',
-  'Essenciais',
-  'Saúde',
-  'Investimentos',
-  'Outros',
-] as const
+export type TipoOrcamentoCategoria = 'essencial' | 'nao_essencial' | 'investimento'
+
+export interface CategoriaItem {
+  id: string
+  nome: string
+  /** Só relevante para despesa */
+  tipoOrcamento?: TipoOrcamentoCategoria
+  ativa?: boolean
+}
+
+/** Categorias de despesa padrão — ampliada */
+export const CATEGORIAS_DESPESA_PADRAO: CategoriaItem[] = [
+  // Essenciais
+  { id: 'moradia', nome: 'Moradia', tipoOrcamento: 'essencial' },
+  { id: 'alimentacao', nome: 'Alimentação', tipoOrcamento: 'essencial' },
+  { id: 'transporte', nome: 'Transporte', tipoOrcamento: 'essencial' },
+  { id: 'saude', nome: 'Saúde', tipoOrcamento: 'essencial' },
+  { id: 'educacao', nome: 'Educação', tipoOrcamento: 'essencial' },
+  { id: 'contas_casa', nome: 'Contas da casa', tipoOrcamento: 'essencial' },
+  { id: 'internet', nome: 'Internet e telefone', tipoOrcamento: 'essencial' },
+  { id: 'seguros', nome: 'Seguros', tipoOrcamento: 'essencial' },
+  { id: 'cuidados', nome: 'Cuidados pessoais', tipoOrcamento: 'essencial' },
+  { id: 'essenciais', nome: 'Essenciais', tipoOrcamento: 'essencial' },
+  // Não essenciais
+  { id: 'assinatura', nome: 'Assinatura', tipoOrcamento: 'nao_essencial' },
+  { id: 'lazer', nome: 'Lazer', tipoOrcamento: 'nao_essencial' },
+  { id: 'compras', nome: 'Compras', tipoOrcamento: 'nao_essencial' },
+  { id: 'restaurante', nome: 'Restaurante e delivery', tipoOrcamento: 'nao_essencial' },
+  { id: 'vestuario', nome: 'Vestuário', tipoOrcamento: 'nao_essencial' },
+  { id: 'pet', nome: 'Pet', tipoOrcamento: 'nao_essencial' },
+  { id: 'presentes', nome: 'Presentes', tipoOrcamento: 'nao_essencial' },
+  { id: 'viagem', nome: 'Viagem', tipoOrcamento: 'nao_essencial' },
+  { id: 'parcelamento', nome: 'Parcelamento', tipoOrcamento: 'nao_essencial' },
+  { id: 'outros', nome: 'Outros', tipoOrcamento: 'nao_essencial' },
+  // Investimentos
+  { id: 'investimentos', nome: 'Investimentos', tipoOrcamento: 'investimento' },
+  { id: 'reserva', nome: 'Reserva de emergência', tipoOrcamento: 'investimento' },
+  { id: 'previdencia', nome: 'Previdência', tipoOrcamento: 'investimento' },
+]
+
+export const CATEGORIAS_RECEITA_PADRAO: CategoriaItem[] = [
+  { id: 'salario', nome: 'Salário' },
+  { id: 'freelance', nome: 'Freelance' },
+  { id: 'extra', nome: 'Extra' },
+  { id: 'rendimento', nome: 'Rendimento' },
+  { id: 'aluguel_rec', nome: 'Aluguel recebido' },
+  { id: '13', nome: '13º / férias' },
+  { id: 'reembolso', nome: 'Reembolso' },
+  { id: 'emprestimo_rec', nome: 'Empréstimo' },
+  { id: 'outros_rec', nome: 'Outros' },
+]
+
+/** Legado — nomes das categorias de despesa padrão */
+export const CATEGORIAS = CATEGORIAS_DESPESA_PADRAO.map((c) => c.nome)
 
 export const CORES_CATEGORIA: Record<string, string> = {
   Alimentação: 'bg-rose-500/10 text-rose-400',

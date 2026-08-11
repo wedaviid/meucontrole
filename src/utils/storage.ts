@@ -1,5 +1,5 @@
 import type { FaturaItem, Receita, Recorrente, Objetivo, MetaMensal, AppConfig, MeioPagamento } from '../types'
-import { CONFIG_PADRAO, CONTAS_PADRAO, origensDeContas, contasDeOrigens } from '../types'
+import { CONFIG_PADRAO, CONTAS_PADRAO, origensDeContas, contasDeOrigens, CATEGORIAS_DESPESA_PADRAO, CATEGORIAS_RECEITA_PADRAO } from '../types'
 import { CORES_CATEGORIA } from '../types'
 
 const KEY_DESPESAS = 'meucontrole_despesas'
@@ -274,6 +274,12 @@ export function carregarConfig(): AppConfig {
       contas,
       metodoOrcamento: parsed.metodoOrcamento || '50-30-20',
       percentuais: parsed.percentuais || { essenciais: 50, naoEssenciais: 30, investimentos: 20 },
+      categoriasDespesa: parsed.categoriasDespesa?.length
+        ? parsed.categoriasDespesa
+        : CATEGORIAS_DESPESA_PADRAO.map((c) => ({ ...c })),
+      categoriasReceita: parsed.categoriasReceita?.length
+        ? parsed.categoriasReceita
+        : CATEGORIAS_RECEITA_PADRAO.map((c) => ({ ...c })),
     }
   } catch {
     return {
