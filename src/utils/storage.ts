@@ -487,3 +487,121 @@ export function excluirParcelamento(
     return n < atualNum
   })
 }
+
+
+export type ModoAplicarAlteracao = 'somente' | 'futuras'
+
+/** Campos que propagamos na edição em série */
+export type CamposAlteracaoDespesa = {
+  nomeBase: string
+  valor: number
+  pessoa: string
+  categoria: string
+  cartao: string
+  meio?: FaturaItem['meio']
+  data: string
+  pago?: boolean
+  cor: string
+  sigla: string
+}
+
+/**
+ * Atualiza o item no mês atual e, se modo=futuras, parcelas futuras do mesmo grupo.
+ * Retorna lista do mês atual atualizada.
+ */
+export function atualizarParcelamento(
+  mesAtual: string,
+  itemOriginal: FaturaItem,
+  campos: CamposAlteracaoDespesa,
+  modo: ModoAplicarAlteracao,
+  listaMesAtual: FaturaItem[],
+): FaturaItem[] {
+  const total = itemOriginal.totalParcelas
+  const atualNum = itemOriginal.parcelaAtual || 1
+
+  const aplicarEm = (d: FaturaItem): FaturaItem => {
+    const num = d.parcelaAtual || 1
+    const tot = d.totalParcelas || total || 1
+    const nome =
+      itemOriginal.parcelado && tot > 1
+        ? `${campos.nomeBase} ${num}/${tot}`
+        : campos.nomeBase
+    return {
+      ...d,
+      nome,
+      valor: campos.valor,
+      pessoa: campos.pessoa,
+      categoria: campos.categoria,
+      cartao: campos.cartao,
+      meio: campos.meio,
+      data: campos.data,
+      pago: campos.pago !== undefined ? campos.pago : d.pago,
+      cor: campos.cor,
+      sigla: campos.sigla,
+    }
+  }
+
+  const listaLocal = listaMesAtual.map((d) =>
+    d.id === itemOriginal.id ? aplicarEm({ ...d, ...itemOriginal, id: d.id }) : d,
+  )
+
+  if (modo === 'somente' || !itemOriginal.parcelado || !total) {
+    return listaLocal
+  }
+
+  const meses = listarMesesDisponiveis()
+  for (const mes of meses) {
+    if (mes < mesAtual) continue
+    if (mes === mesAtual) continue
+    const lista = carregarDespesas(mes)
+    let mudou = false
+    const nova = lista.map((d) => {
+      if (!parcelaDoMesmoGrupo(d, itemOriginal)) return d
+      const n = d.parcelaAtual || 0
+      if (n < atualNum) return d
+      mudou = true
+      return aplicarEm(d)
+    })
+    if (mudou) salvarDespesas(nova, mes)
+  }
+
+  // no mês atual, atualiza outras do mesmo grupo com num >= atual (raro)
+  return listaLocal.map((d) => {
+    if (d.id === itemOriginal.id) return d
+    if (!parcelaDoMesmoGrupo(d, itemOriginal)) return d
+    const n = d.parcelaAtual || 0
+    if (n < atualNum) return d
+    return aplicarEm(d)
+  })
+}
+
+/** Atualiza lançamentos futuros ligados ao mesmo recorrenteId */
+export function atualizarPorRecorrenteId(
+  mesAtual: string,
+  recorrenteId: number,
+  campos: CamposAlteracaoDespesa,
+  modo: ModoAplicarAlteracao,
+  listaMesAtual: FaturaItem[],
+): FaturaItem[] {
+  const aplicar = (d: FaturaItem): FaturaItem => ({
+    ...d,
+    nome: campos.nomeBase,
+    valor: campos.valor,
+    pessoa: campos.pessoa,
+    categoria: campos.categoria,
+    cartao: campos.cartao,
+    meio: campos.meio,
+    data: campos.data,
+    cor: campos.cor,
+    sigla: campos.sigla,
+  })
+
+  const listaLocal = listaMesAtual.map((d) =>
+    d.id === undefined ? d : d.recorrenteId === recorrenteId && modo === 'futuras'
+      ? aplicar(d)
+      : d,
+  )
+  // always update the one being edited is handled by caller via id
+  // better: caller passes item id
+  return listaLocal
+}

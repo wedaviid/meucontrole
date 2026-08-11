@@ -15,6 +15,8 @@ import {
   aplicarRecorrentesNoMes,
   gerarParcelasFuturas,
   excluirParcelamento,
+  atualizarParcelamento,
+  nomeBaseParcela,
   carregarObjetivos,
   salvarObjetivos,
   carregarMetas,
@@ -44,6 +46,7 @@ import { ReceitasSection } from './components/ReceitasSection'
 import { SyncPage } from './components/SyncPage'
 import { ConfigPage } from './components/ConfigPage'
 import { ExcluirDespesaModal } from './components/ExcluirDespesaModal'
+import { AplicarAlteracaoModal } from './components/AplicarAlteracaoModal'
 import { SugestaoRecorrente, detectarCandidatosRecorrentes } from './components/SugestaoRecorrente'
 
 
@@ -71,6 +74,12 @@ function App() {
 
   const modalAbertoRef = useRef(false)
   const [excluindoDespesa, setExcluindoDespesa] = useState<FaturaItem | null>(null)
+  const [pendenteAlteracao, setPendenteAlteracao] = useState<{
+    original: FaturaItem
+    despesa: NovaDespesa
+    cor: string
+    sigla: string
+  } | null>(null)
   const [modalDespesa, setModalDespesa] = useState(false)
   const [modalReceita, setModalReceita] = useState(false)
 
@@ -424,12 +433,28 @@ function App() {
         : despesa.nome
 
     if (editando) {
+      const ehSerie =
+        !!(editando.parcelado && editando.totalParcelas && editando.totalParcelas > 1) ||
+        !!editando.recorrenteId
+
+      if (ehSerie) {
+        setPendenteAlteracao({ original: editando, despesa, cor, sigla })
+        setEditando(null)
+        return
+      }
+
+      const nomeBase = nomeBaseParcela(despesa.nome)
+      const nomeFinal =
+        editando.parcelado && editando.totalParcelas && editando.totalParcelas > 1
+          ? `${nomeBase} ${editando.parcelaAtual || 1}/${editando.totalParcelas}`
+          : nomeBase
+
       setDespesasLista((prev) =>
         prev.map((item) =>
           item.id === editando.id
             ? {
                 ...item,
-                nome: despesa.nome,
+                nome: nomeFinal,
                 valor: despesa.valor,
                 pessoa: despesa.pessoa,
                 categoria: despesa.categoria,
@@ -437,9 +462,9 @@ function App() {
                 meio: despesa.meio,
                 data: despesa.data,
                 parcelado: despesa.parcelado,
-                totalParcelas: despesa.totalParcelas,
+                totalParcelas: despesa.totalParcelas ?? item.totalParcelas,
                 pago: despesa.pago,
-                parcelaAtual: despesa.parcelado ? item.parcelaAtual || 1 : undefined,
+                parcelaAtual: item.parcelaAtual,
                 sigla,
                 cor,
               }
@@ -542,6 +567,112 @@ function App() {
     setDespesasLista((prev) => excluirParcelamento(mesAtual, excluindoDespesa, modo, prev))
     setExcluindoDespesa(null)
   }
+
+  const aplicarAlteracaoDespesa = (modo: 'somente' | 'futuras') => {
+    if (!pendenteAlteracao) return
+    const { original, despesa, cor, sigla } = pendenteAlteracao
+    const nomeBase = nomeBaseParcela(despesa.nome)
+    const campos = {
+      nomeBase,
+      valor: despesa.valor,
+      pessoa: despesa.pessoa,
+      categoria: despesa.categoria,
+      cartao: despesa.cartao,
+      meio: despesa.meio,
+      data: despesa.data,
+      pago: despesa.pago,
+      cor,
+      sigla,
+    }
+
+    if (original.parcelado && original.totalParcelas && original.totalParcelas > 1) {
+      setDespesasLista((prev) => atualizarParcelamento(mesAtual, original, campos, modo, prev))
+    } else {
+      // atualiza só este; se futuras e tem recorrenteId, atualiza template + futuros no mês
+      setDespesasLista((prev) =>
+        prev.map((item) => {
+          if (item.id === original.id) {
+            return {
+              ...item,
+              nome: nomeBase,
+              valor: despesa.valor,
+              pessoa: despesa.pessoa,
+              categoria: despesa.categoria,
+              cartao: despesa.cartao,
+              meio: despesa.meio,
+              data: despesa.data,
+              pago: despesa.pago,
+              sigla,
+              cor,
+            }
+          }
+          if (
+            modo === 'futuras' &&
+            original.recorrenteId &&
+            item.recorrenteId === original.recorrenteId
+          ) {
+            return {
+              ...item,
+              nome: nomeBase,
+              valor: despesa.valor,
+              pessoa: despesa.pessoa,
+              categoria: despesa.categoria,
+              cartao: despesa.cartao,
+              meio: despesa.meio,
+              cor,
+              sigla,
+            }
+          }
+          return item
+        }),
+      )
+      if (modo === 'futuras' && original.recorrenteId) {
+        setRecorrentes((prev) =>
+          prev.map((r) =>
+            r.id === original.recorrenteId
+              ? {
+                  ...r,
+                  nome: nomeBase,
+                  valor: despesa.valor,
+                  pessoa: despesa.pessoa,
+                  categoria: despesa.categoria,
+                  cartao: despesa.cartao,
+                  meio: despesa.meio,
+                }
+              : r,
+          ),
+        )
+        // outros meses
+        const meses = listarMesesDisponiveis()
+        for (const mes of meses) {
+          if (mes <= mesAtual) continue
+          const lista = carregarDespesas(mes)
+          let mudou = false
+          const nova = lista.map((d) => {
+            if (d.recorrenteId !== original.recorrenteId) return d
+            mudou = true
+            return {
+              ...d,
+              nome: nomeBase,
+              valor: despesa.valor,
+              pessoa: despesa.pessoa,
+              categoria: despesa.categoria,
+              cartao: despesa.cartao,
+              meio: despesa.meio,
+              cor,
+              sigla,
+            }
+          })
+          if (mudou) {
+            // dynamic import avoid - use salvarDespesas from storage
+            salvarDespesas(nova, mes)
+          }
+        }
+      }
+    }
+    setPendenteAlteracao(null)
+  }
+
 
   const handleEditarDespesa = (item: FaturaItem) => { setEditando(item); setModalDespesa(true) }
   const handleSalvarReceita = (receita: Omit<Receita, 'id'> & { id?: number }) => {
@@ -823,6 +954,16 @@ function App() {
           )}
         </div>
       </main>
+
+      <AplicarAlteracaoModal
+        aberto={!!pendenteAlteracao}
+        onFechar={() => {
+          // se fechar sem escolher, aplica só este
+          if (pendenteAlteracao) aplicarAlteracaoDespesa('somente')
+        }}
+        onSomenteEste={() => aplicarAlteracaoDespesa('somente')}
+        onProximos={() => aplicarAlteracaoDespesa('futuras')}
+      />
 
       <ExcluirDespesaModal
         aberto={!!excluindoDespesa}
