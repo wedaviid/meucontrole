@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import type { FaturaItem, MeioPagamento } from '../types'
 import { CATEGORIAS, MEIOS_PAGAMENTO } from '../types'
@@ -124,8 +124,11 @@ export function NovaDespesaModal({
     }
   }, [meio, origens, precisaOrigem, cartao])
 
+  const estavaAberto = useRef(false)
+
+  // Só preenche/limpa ao ABRIR o modal — não ao voltar do Alt+Tab (pessoas/origens mudam no pull)
   useEffect(() => {
-    if (aberto) {
+    if (aberto && !estavaAberto.current) {
       setVisivel(true)
       if (despesaInicial) {
         setNome(despesaInicial.nome.replace(/\s+\d+\/\d+$/, ''))
@@ -151,7 +154,7 @@ export function NovaDespesaModal({
         setNome('')
         setValor('')
         setPessoa(pessoas[0] || 'Eu')
-        setCategoria('Alimentação')
+        setCategoria(listaCat[0] || 'Alimentação')
         setMeio('credito')
         setCartao(origensPorMeio.credito?.[0] || '')
         setParcelado(false)
@@ -164,11 +167,14 @@ export function NovaDespesaModal({
         setData(new Date().toISOString().slice(0, 10))
       }
       setErro('')
-    } else {
+    }
+    if (!aberto && estavaAberto.current) {
       const t = setTimeout(() => setVisivel(false), 200)
+      estavaAberto.current = aberto
       return () => clearTimeout(t)
     }
-  }, [aberto, despesaInicial, pessoas, origensPorMeio])
+    estavaAberto.current = aberto
+  }, [aberto, despesaInicial, pessoas, origensPorMeio, listaCat])
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {

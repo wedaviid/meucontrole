@@ -69,9 +69,13 @@ function App() {
   const [mesAtual, setMesAtualState] = useState(() => getMesAtual())
   const [mesesDisponiveis, setMesesDisponiveis] = useState(() => listarMesesDisponiveis())
 
+  const modalAbertoRef = useRef(false)
   const [excluindoDespesa, setExcluindoDespesa] = useState<FaturaItem | null>(null)
   const [modalDespesa, setModalDespesa] = useState(false)
   const [modalReceita, setModalReceita] = useState(false)
+
+  // Atualiza a cada render (ref não causa re-render)
+  modalAbertoRef.current = modalDespesa || modalReceita || !!excluindoDespesa
   const [menuFab, setMenuFab] = useState(false)
   const [editando, setEditando] = useState<FaturaItem | null>(null)
   const [editandoReceita, setEditandoReceita] = useState<Receita | null>(null)
@@ -124,7 +128,8 @@ function App() {
     void puxar()
 
     const onVis = () => {
-      if (document.visibilityState === 'visible' && carregarSyncConfig()) {
+      // Não puxar nuvem se há modal aberto — evita zerar formulário no Alt+Tab
+      if (document.visibilityState === 'visible' && carregarSyncConfig() && !modalAbertoRef.current) {
         void syncAutoPull().then((r) => {
           if (r.ok) recarregarDoLocal()
         })

@@ -46,8 +46,10 @@ export function NovaReceitaModal({
 
   const isEditando = !!receitaInicial
 
+  const estavaAberto = useRef(false)
+
   useEffect(() => {
-    if (aberto) {
+    if (aberto && !estavaAberto.current) {
       setVisivel(true)
       if (receitaInicial) {
         setNome(receitaInicial.nome)
@@ -78,11 +80,14 @@ export function NovaReceitaModal({
         setData(new Date().toISOString().slice(0, 10))
       }
       setErro('')
-    } else {
+    }
+    if (!aberto && estavaAberto.current) {
       const t = setTimeout(() => setVisivel(false), 200)
+      estavaAberto.current = aberto
       return () => clearTimeout(t)
     }
-  }, [aberto, receitaInicial])
+    estavaAberto.current = aberto
+  }, [aberto, receitaInicial, pessoas, contasTodas])
 
   useEffect(() => {
     if (!aberto || categoriaManual || isEditando) return
